@@ -1,0 +1,137 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+/* Ink ledger — charcoal primary, no green accents */
+@layer theme {
+  :root {
+    --primary: 24 24 27;
+    --primary-foreground: 250 250 250;
+    --card: 255 255 255;
+    --secondary: 244 244 245;
+    --secondary-foreground: 24 24 27;
+    --background: 244 244 245;
+    --popover: 255 255 255;
+    --popover-foreground: 24 24 27;
+    --muted: 244 244 245;
+    --muted-foreground: 113 113 122;
+    --destructive: 185 28 28;
+    --foreground: 24 24 27;
+    --border: 228 228 231;
+    --input: 228 228 231;
+    --ring: 24 24 27;
+    --accent: 244 244 245;
+    --accent-foreground: 24 24 27;
+    --tape-1: 24 24 27;
+    --tape-2: 63 63 70;
+    --tape-3: 87 83 78;
+    --tape-4: 113 113 122;
+    --tape-5: 161 161 170;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --primary: 250 250 250;
+      --primary-foreground: 24 24 27;
+      --card: 24 24 27;
+      --secondary: 39 39 42;
+      --secondary-foreground: 250 250 250;
+      --background: 9 9 11;
+      --popover: 24 24 27;
+      --popover-foreground: 250 250 250;
+      --muted: 39 39 42;
+      --muted-foreground: 161 161 170;
+      --destructive: 239 68 68;
+      --foreground: 250 250 250;
+      --border: 39 39 42;
+      --input: 39 39 42;
+      --ring: 250 250 250;
+      --accent: 39 39 42;
+      --accent-foreground: 250 250 250;
+      --tape-1: 250 250 250;
+      --tape-2: 161 161 170;
+      --tape-3: 168 162 158;
+      --tape-4: 113 113 122;
+      --tape-5: 82 82 91;
+    }
+  }
+
+  :root.dark {
+    --primary: 250 250 250;
+    --primary-foreground: 24 24 27;
+    --card: 24 24 27;
+    --secondary: 39 39 42;
+    --secondary-foreground: 250 250 250;
+    --background: 9 9 11;
+    --popover: 24 24 27;
+    --popover-foreground: 250 250 250;
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
+    --destructive: 239 68 68;
+    --foreground: 250 250 250;
+    --border: 39 39 42;
+    --input: 39 39 42;
+    --ring: 250 250 250;
+    --accent: 39 39 42;
+    --accent-foreground: 250 250 250;
+    --tape-1: 250 250 250;
+    --tape-2: 161 161 170;
+    --tape-3: 168 162 158;
+    --tape-4: 113 113 122;
+    --tape-5: 82 82 91;
+  }
+
+  :root.light {
+    --primary: 24 24 27;
+    --primary-foreground: 250 250 250;
+    --card: 255 255 255;
+    --secondary: 244 244 245;
+    --secondary-foreground: 24 24 27;
+    --background: 244 244 245;
+    --popover: 255 255 255;
+    --popover-foreground: 24 24 27;
+    --muted: 244 244 245;
+    --muted-foreground: 113 113 122;
+    --destructive: 185 28 28;
+    --foreground: 24 24 27;
+    --border: 228 228 231;
+    --input: 228 228 231;
+    --ring: 24 24 27;
+    --accent: 244 244 245;
+    --accent-foreground: 24 24 27;
+    --tape-1: 24 24 27;
+    --tape-2: 63 63 70;
+    --tape-3: 87 83 78;
+    --tape-4: 113 113 122;
+    --tape-5: 161 161 170;
+  }
+}
+
+@theme inline {
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-card: rgb(var(--card));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-background: rgb(var(--background));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-foreground: rgb(var(--foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-tape-1: rgb(var(--tape-1));
+  --color-tape-2: rgb(var(--tape-2));
+  --color-tape-3: rgb(var(--tape-3));
+  --color-tape-4: rgb(var(--tape-4));
+  --color-tape-5: rgb(var(--tape-5));
+  --font-sans: Figtree_500Medium;
+  --font-display: Fraunces_600SemiBold;
+  --font-mono: IBMPlexMono_400Regular;
+}
