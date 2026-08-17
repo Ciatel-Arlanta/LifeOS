@@ -82,3 +82,32 @@ export function isInMonth(isoDate: string, year: number, monthIndex: number): bo
   const date = new Date(`${isoDate}T00:00:00`);
   return date.getFullYear() === year && date.getMonth() === monthIndex;
 }
+
+export function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function todayIso(now = new Date()): string {
+  return toIsoDate(now);
+}
+
+export function addBillingPeriod(
+  isoDate: string,
+  period: 'weekly' | 'monthly' | 'yearly'
+): string {
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (period === 'weekly') date.setDate(date.getDate() + 7);
+  if (period === 'monthly') date.setMonth(date.getMonth() + 1);
+  if (period === 'yearly') date.setFullYear(date.getFullYear() + 1);
+  return toIsoDate(date);
+}
+
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}

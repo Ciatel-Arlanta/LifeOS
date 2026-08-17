@@ -2,7 +2,7 @@
 
 Personal Android app for expenses, subscriptions, TickTick reminders, and account identity.
 
-Phase 0–2: Expo shell, Gluestack UI, and a working expense tracker on local storage / SQLite. Subscriptions, reminders, and accounts still use sample data.
+Expenses, subscriptions, and accounts persist locally. TickTick lists come from a token in Settings. LifeOS reminders sit on those tasks.
 
 ## Run
 

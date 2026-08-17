@@ -5,24 +5,70 @@ import { HStack } from '@/components/ui/hstack';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { accountLabel } from '@/features/accounts/helpers';
+import { useAccountData } from '@/features/accounts/store';
 import { useExpenseData } from '@/features/expenses/store';
-import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/mock';
-import type { AutopayMethod, BillingPeriod } from '@/features/subscriptions/types';
+import { useSubscriptionActions } from '@/features/subscriptions/store';
+import {
+  AUTOPAY_METHOD_LABEL,
+  AUTOPAY_METHODS,
+  BILLING_PERIOD_LABEL,
+  BILLING_PERIODS,
+  type AutopayMethod,
+  type BillingPeriod,
+} from '@/features/subscriptions/types';
+import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
+import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
-import { useState } from 'react';
-
-const PERIODS: BillingPeriod[] = ['weekly', 'monthly', 'yearly'];
-const METHODS: AutopayMethod[] = ['gpay', 'card', 'other'];
+import { useEffect, useState } from 'react';
 
 export default function NewSubscriptionScreen() {
   const { categories } = useExpenseData();
+  const { accounts, services } = useAccountData();
+  const { addSubscription } = useSubscriptionActions();
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
   const [renewal, setRenewal] = useState('');
   const [autopay, setAutopay] = useState(true);
   const [method, setMethod] = useState<AutopayMethod>('gpay');
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(categories[0]?.id ?? null);
+  const [accountId, setAccountId] = useState<number | null>(null);
+  const [serviceId, setServiceId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (categoryId == null && categories[0]) setCategoryId(categories[0].id);
+  }, [categories, categoryId]);
+
+  async function save() {
+    const parsed = parseRupeeInput(cost);
+    if (!name.trim()) {
+      setError('Add a name.');
+      return;
+    }
+    if (parsed == null || parsed <= 0) {
+      setError('Enter a cost.');
+      return;
+    }
+    if (!renewal.trim()) {
+      setError('Add the next renewal date.');
+      return;
+    }
+    const linkedServiceId = await ensureSubscriptionAccountService(accountId, serviceId);
+    await addSubscription({
+      name,
+      costMinor: parsed,
+      billingPeriod: period,
+      renewalDate: renewal.trim(),
+      autopayEnabled: autopay,
+      autopayMethod: autopay ? method : null,
+      categoryId,
+      accountId,
+      serviceId: linkedServiceId ?? null,
+    });
+    router.back();
+  }
 
   return (
     <Screen>
@@ -32,11 +78,7 @@ export default function NewSubscriptionScreen() {
             Name
           </Text>
           <Input>
-            <InputField
-              value={name}
-              onChangeText={setName}
-              placeholder="Claude Pro, rent, gym…"
-            />
+            <InputField value={name} onChangeText={setName} placeholder="Claude Pro, rent, gym…" />
           </Input>
         </VStack>
 
@@ -59,7 +101,7 @@ export default function NewSubscriptionScreen() {
             Billing period
           </Text>
           <HStack space="sm" className="flex-wrap">
-            {PERIODS.map((value) => (
+            {BILLING_PERIODS.map((value) => (
               <Chip
                 key={value}
                 label={BILLING_PERIOD_LABEL[value]}
@@ -94,7 +136,7 @@ export default function NewSubscriptionScreen() {
           </HStack>
           {autopay ? (
             <HStack space="sm" className="flex-wrap">
-              {METHODS.map((value) => (
+              {AUTOPAY_METHODS.map((value) => (
                 <Chip
                   key={value}
                   label={AUTOPAY_METHOD_LABEL[value]}
@@ -125,10 +167,47 @@ export default function NewSubscriptionScreen() {
           </HStack>
         </VStack>
 
-        <Text size="sm" className="text-muted-foreground">
-          Saving is not wired yet. This screen is the entry layout.
-        </Text>
-        <Button onPress={() => router.back()}>
+        <VStack space="sm">
+          <Text size="sm" bold>
+            Account
+          </Text>
+          <HStack space="sm" className="flex-wrap">
+            <Chip label="None" selected={accountId == null} onPress={() => setAccountId(null)} />
+            {accounts.map((account) => (
+              <Chip
+                key={account.id}
+                label={accountLabel(account)}
+                selected={accountId === account.id}
+                onPress={() => setAccountId(account.id)}
+              />
+            ))}
+          </HStack>
+        </VStack>
+
+        <VStack space="sm">
+          <Text size="sm" bold>
+            Service
+          </Text>
+          <HStack space="sm" className="flex-wrap">
+            <Chip label="None" selected={serviceId == null} onPress={() => setServiceId(null)} />
+            {services.map((service) => (
+              <Chip
+                key={service.id}
+                label={service.name}
+                selected={serviceId === service.id}
+                onPress={() => setServiceId(service.id)}
+              />
+            ))}
+          </HStack>
+        </VStack>
+
+        {error ? (
+          <Text size="sm" className="text-destructive">
+            {error}
+          </Text>
+        ) : null}
+
+        <Button onPress={save}>
           <ButtonText>Save subscription</ButtonText>
         </Button>
       </VStack>

@@ -7,7 +7,8 @@ import { Pressable } from '@/components/ui/pressable';
 import { SearchIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { lookupService } from '@/features/accounts/mock';
+import { lookupService } from '@/features/accounts/helpers';
+import { useAccountData } from '@/features/accounts/store';
 import type { Account } from '@/features/accounts/types';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -31,8 +32,9 @@ function AccountRows({ accounts }: { accounts: Account[] }) {
 }
 
 export default function ServiceLookupScreen() {
+  const { providers } = useAccountData();
   const [query, setQuery] = useState('');
-  const result = useMemo(() => lookupService(query), [query]);
+  const result = useMemo(() => lookupService(query, providers), [query, providers]);
 
   return (
     <Screen>
@@ -51,15 +53,11 @@ export default function ServiceLookupScreen() {
 
       {!query.trim() ? (
         <Text size="sm" className="mt-6 text-muted-foreground">
-          Search a service. Used / not used only includes major sign-in identities such as Google,
-          Microsoft, and GitHub.
+          Search a linked service. Used / not used only includes sign-in identities.
         </Text>
       ) : !result ? (
         <VStack className="mt-6">
-          <EmptyState
-            title="No match"
-            body="Try ChatGPT, Claude, Cursor, Figma, Netflix, Notion, Spotify, or Vercel."
-          />
+          <EmptyState title="No match" body="Link a service on an identity first, then search its name." />
         </VStack>
       ) : (
         <VStack space="lg" className="mt-6">

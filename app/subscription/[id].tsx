@@ -1,21 +1,28 @@
 import { Amount } from '@/components/amount';
+import { Chip } from '@/components/chip';
 import { Screen } from '@/components/screen';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import {
-  AUTOPAY_METHOD_LABEL,
-  BILLING_PERIOD_LABEL,
-  getSubscription,
-} from '@/features/subscriptions/mock';
+import { accountLabel } from '@/features/accounts/helpers';
+import { useAccountData } from '@/features/accounts/store';
+import { useSubscriptionActions, useSubscriptionData } from '@/features/subscriptions/store';
+import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/types';
+import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
 import { formatLongDate } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = getSubscription(Number(id));
+  const { subscriptions } = useSubscriptionData();
+  const { accounts } = useAccountData();
+  const { editSubscription, removeSubscription } = useSubscriptionActions();
+  const item = subscriptions.find((row) => row.id === Number(id));
+  const [linking, setLinking] = useState(false);
 
   if (!item) {
     return (
@@ -23,6 +30,23 @@ export default function SubscriptionDetailScreen() {
         <Text bold>Subscription not found</Text>
       </Screen>
     );
+  }
+
+  async function linkAccount(accountId: number | null) {
+    if (!item) return;
+    const serviceId = await ensureSubscriptionAccountService(accountId, item.serviceId, item.serviceName);
+    await editSubscription(item.id, {
+      name: item.name,
+      costMinor: item.costMinor,
+      billingPeriod: item.billingPeriod,
+      renewalDate: item.renewalDate,
+      autopayEnabled: item.autopayEnabled,
+      autopayMethod: item.autopayMethod,
+      categoryId: item.categoryId,
+      accountId,
+      serviceId: serviceId ?? item.serviceId,
+    });
+    setLinking(false);
   }
 
   return (
@@ -58,10 +82,39 @@ export default function SubscriptionDetailScreen() {
         </Card>
 
         <Text size="sm" className="text-muted-foreground">
-          When this renews, LifeOS will add a transaction automatically.
+          When this renews, LifeOS adds a transaction automatically.
         </Text>
-        <Button variant="outline" onPress={() => router.back()}>
-          <ButtonText>Close</ButtonText>
+
+        {linking ? (
+          <VStack space="sm">
+            <Text size="sm" bold>
+              Link account
+            </Text>
+            <HStack space="sm" className="flex-wrap">
+              <Chip label="None" selected={item.accountId == null} onPress={() => linkAccount(null)} />
+              {accounts.map((account) => (
+                <Chip
+                  key={account.id}
+                  label={accountLabel(account)}
+                  selected={item.accountId === account.id}
+                  onPress={() => linkAccount(account.id)}
+                />
+              ))}
+            </HStack>
+          </VStack>
+        ) : (
+          <Button variant="outline" onPress={() => setLinking(true)}>
+            <ButtonText>{item.accountId ? 'Change account' : 'Link account'}</ButtonText>
+          </Button>
+        )}
+
+        <Button
+          variant="destructive"
+          onPress={async () => {
+            await removeSubscription(item.id);
+            router.back();
+          }}>
+          <ButtonText>Delete subscription</ButtonText>
         </Button>
       </VStack>
     </Screen>

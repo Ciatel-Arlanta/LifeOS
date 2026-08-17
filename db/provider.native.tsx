@@ -1,5 +1,5 @@
 import { Text } from '@/components/ui/text';
-import { hydrateExpenses } from '@/features/expenses/store';
+import { hydrateApp } from '@/features/app/hydrate';
 import { toUserMessage } from '@/lib/errors';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { type ReactNode, useEffect, useMemo } from 'react';
@@ -62,7 +62,7 @@ function MigratingDatabase({
 
 function Hydrated({ children }: { children: ReactNode }) {
   useEffect(() => {
-    void hydrateExpenses();
+    void hydrateApp();
   }, []);
   return children;
 }

@@ -15,6 +15,13 @@
       "when": 1786966539952,
       "tag": "0001_brown_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786968559705,
+      "tag": "0002_strange_la_nuit",
+      "breakpoints": true
     }
   ]
 }

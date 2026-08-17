@@ -1,9 +1,61 @@
-import { AppError } from '@/lib/errors';
+import { ensureService, hydrateAccounts, linkService } from '@/features/accounts/store';
+import { getExpenseSnapshot } from '@/features/expenses/store';
+import * as expenseRepo from '@/features/expenses/repository';
+import * as subscriptionRepo from '@/features/subscriptions/repository';
+import { addBillingPeriod, todayIso } from '@/utils/date';
 
-/** Creates expense rows for due subscriptions. Implemented when persistence is wired. */
-export async function postDueSubscriptionExpenses(): Promise<number> {
-  throw new AppError(
-    'Automatic subscription posting is not implemented yet.',
-    'subscriptions.posting_not_implemented'
+function modeFromAutopay(method: 'gpay' | 'card' | 'other' | null): 'gpay' | 'cash' | 'card' {
+  if (method === 'gpay') return 'gpay';
+  return 'card';
+}
+
+export async function postDueSubscriptionExpenses(now = new Date()): Promise<number> {
+  const today = todayIso(now);
+  const items = await subscriptionRepo.listSubscriptions();
+  const postedKeys = new Set(
+    getExpenseSnapshot().expenses.map((expense) => `${expense.subscriptionId}:${expense.occurredAt}`)
   );
+  let posted = 0;
+
+  for (const item of items) {
+    let cursor = item.renewalDate;
+    let guard = 0;
+    while (cursor <= today && guard < 36) {
+      const key = `${item.id}:${cursor}`;
+      if (!postedKeys.has(key)) {
+        await expenseRepo.createExpense({
+          amountMinor: item.costMinor,
+          categoryId: item.categoryId,
+          transactionMode: modeFromAutopay(item.autopayMethod),
+          occurredAt: cursor,
+          subscriptionId: item.id,
+        });
+        postedKeys.add(key);
+        posted += 1;
+      }
+      cursor = addBillingPeriod(cursor, item.billingPeriod);
+      guard += 1;
+    }
+    if (cursor !== item.renewalDate) {
+      await subscriptionRepo.updateRenewalDate(item.id, cursor);
+    }
+  }
+
+  return posted;
+}
+
+export async function ensureSubscriptionAccountService(
+  accountId: number | null,
+  serviceId: number | null,
+  serviceName?: string | null
+) {
+  if (!accountId) return serviceId;
+  let resolved = serviceId;
+  if (!resolved && serviceName) {
+    const service = await ensureService(serviceName);
+    resolved = service.id;
+  }
+  if (resolved) await linkService(accountId, resolved);
+  await hydrateAccounts();
+  return resolved;
 }

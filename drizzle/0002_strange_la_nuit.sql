@@ -1,0 +1,1 @@
+ALTER TABLE `ticktick_task_refs` ADD `is_open` integer DEFAULT true NOT NULL;

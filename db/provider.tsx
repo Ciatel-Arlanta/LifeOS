@@ -1,10 +1,10 @@
-import { hydrateExpenses } from '@/features/expenses/store';
+import { hydrateApp } from '@/features/app/hydrate';
 import { type ReactNode, useEffect } from 'react';
 
-/** Web preview persists expenses in localStorage. Native uses provider.native.tsx. */
+/** Web preview persists in localStorage. Native uses provider.native.tsx. */
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    void hydrateExpenses();
+    void hydrateApp();
   }, []);
   return children;
 }

@@ -12,7 +12,6 @@ import { Pressable } from '@/components/ui/pressable';
 import { SettingsIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { upcomingReminders } from '@/features/reminders/mock';
 import {
   categoryBreakdown,
   expensesForMonth,
@@ -20,7 +19,12 @@ import {
   useExpenseData,
 } from '@/features/expenses/store';
 import { TRANSACTION_MODE_LABEL } from '@/features/expenses/types';
-import { monthlyCommitmentMinor, upcomingSubscriptions } from '@/features/subscriptions/mock';
+import { upcomingReminders, useReminderData } from '@/features/reminders/store';
+import {
+  monthlyCommitmentMinor,
+  upcomingSubscriptions,
+  useSubscriptionData,
+} from '@/features/subscriptions/store';
 import { formatMonthLabel, formatRelativeDay, formatWeekdayDate } from '@/utils/date';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -32,10 +36,12 @@ export default function HomeScreen() {
   const year = now.getFullYear();
   const month = now.getMonth();
   const { expenses } = useExpenseData();
+  const { subscriptions } = useSubscriptionData();
+  const { openTasks } = useReminderData();
   const total = monthTotal(expenses, year, month);
   const shares = categoryBreakdown(expenses, year, month);
-  const renewals = upcomingSubscriptions(3, now);
-  const reminders = upcomingReminders(3);
+  const renewals = upcomingSubscriptions(subscriptions, 3, now);
+  const reminders = upcomingReminders(openTasks, 3);
   const recent = expenses.slice(0, 4);
   const monthRows = expensesForMonth(expenses, year, month);
 
@@ -95,8 +101,13 @@ export default function HomeScreen() {
             <Text size="sm" className="text-muted-foreground">
               Monthly commitments
             </Text>
-            <Amount minor={monthlyCommitmentMinor()} size="sm" />
+            <Amount minor={monthlyCommitmentMinor(subscriptions)} size="sm" />
           </HStack>
+          {renewals.length === 0 ? (
+            <Text size="sm" className="py-3.5 text-muted-foreground">
+              No upcoming renewals
+            </Text>
+          ) : null}
           {renewals.map((item, index) => (
             <Pressable
               key={item.id}
@@ -123,6 +134,11 @@ export default function HomeScreen() {
           onAction={() => router.push('/reminders')}
         />
         <Card className="px-4 py-0">
+          {reminders.length === 0 ? (
+            <Text size="sm" className="py-3.5 text-muted-foreground">
+              No LifeOS reminders yet
+            </Text>
+          ) : null}
           {reminders.map((item, index) => (
             <Pressable
               key={item.task.id}

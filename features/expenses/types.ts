@@ -22,6 +22,7 @@ export type ExpenseDraft = {
   categoryId: number | null;
   transactionMode: TransactionMode;
   occurredAt: string;
+  subscriptionId?: number | null;
 };
 
 export const TRANSACTION_MODE_LABEL: Record<TransactionMode, string> = {

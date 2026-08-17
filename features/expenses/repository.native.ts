@@ -52,7 +52,7 @@ export async function createExpense(draft: ExpenseDraft): Promise<Expense> {
       categoryId: draft.categoryId,
       transactionMode: draft.transactionMode,
       occurredAt: draft.occurredAt,
-      subscriptionId: null,
+      subscriptionId: draft.subscriptionId ?? null,
       createdAt: now,
       updatedAt: now,
     })

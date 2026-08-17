@@ -26,8 +26,24 @@ export type Provider = {
   accounts: Account[];
 };
 
+export type ServiceRecord = {
+  id: number;
+  name: string;
+};
+
 export type ServiceLookupResult = {
   serviceName: string;
   used: Account[];
   notUsed: Account[];
+};
+
+export type AccountDraft = {
+  providerId: number | null;
+  providerName: string;
+  isIdentity: boolean;
+  isService: boolean;
+  identifier: string;
+  type: AccountType;
+  purpose: string;
+  createdDate: string;
 };

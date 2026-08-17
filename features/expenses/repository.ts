@@ -73,7 +73,7 @@ export async function createExpense(draft: ExpenseDraft): Promise<Expense> {
     categoryName: data.categories.find((item) => item.id === draft.categoryId)?.name ?? 'Uncategorized',
     transactionMode: draft.transactionMode,
     occurredAt: draft.occurredAt,
-    subscriptionId: null,
+    subscriptionId: draft.subscriptionId ?? null,
   };
   data.expenses.push(expense);
   data.nextExpenseId += 1;

@@ -35,6 +35,10 @@ export async function hydrateExpenses() {
   emit();
 }
 
+export function getExpenseSnapshot() {
+  return snapshot;
+}
+
 export function useExpenseData() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

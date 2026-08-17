@@ -93,6 +93,7 @@ export const ticktickTaskRefs = sqliteTable('ticktick_task_refs', {
   title: text('title').notNull(),
   dueAt: integer('due_at', { mode: 'timestamp_ms' }),
   projectName: text('project_name'),
+  isOpen: integer('is_open', { mode: 'boolean' }).notNull().default(true),
   lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' }).notNull(),
 });
 

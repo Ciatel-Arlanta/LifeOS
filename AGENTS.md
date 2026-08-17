@@ -53,7 +53,7 @@ Web preview (`expo start --web`) is useful for layout. SQLite WASM is not wired 
 | Styling | NativeWind v5 + Tailwind CSS v4 (CSS-first, `global.css`) |
 | UI kit | **Gluestack UI v5** (`@gluestack-ui/core`), copy-paste components in `components/ui/` |
 | Client state | Zustand — UI/session only |
-| Data | SQLite + Drizzle on Android; localStorage fallback on web for expenses |
+| Data | SQLite + Drizzle on Android; localStorage fallback on web |
 | Notifications | Expo Notifications (stub only so far) |
 | Package manager | Bun |
 
@@ -203,12 +203,13 @@ Money is integer paise. After schema changes: `bun run db:generate` and commit `
 
 | Data | Android | Web preview |
 |---|---|---|
-| Expenses + categories | SQLite | `localStorage` key `lifeos.expense-data` |
-| Subscriptions | mock | mock |
-| Reminders / TickTick | mock | mock |
-| Accounts | mock | mock |
+| Expenses + categories | SQLite | `lifeos.expense-data` |
+| Subscriptions | SQLite | `lifeos.subscription-data` |
+| Accounts / providers / services | SQLite | `lifeos.account-data` |
+| Reminder configs + task refs | SQLite | `lifeos.reminder-data` |
+| TickTick token | SecureStore | `lifeos.ticktick-token` |
 
-`features/expenses/store.ts` is the expense API (`useExpenseData`, `useExpenseActions`, `hydrateExpenses`).
+Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `features/accounts/store.ts`, `features/reminders/store.ts`. App boot: `features/app/hydrate.ts`.
 
 ---
 
@@ -228,23 +229,30 @@ Money is integer paise. After schema changes: `bun run db:generate` and commit `
 - Dashboard month tape + recent spend from live data
 - Categories start empty
 
+**Phase 3–5 — subscriptions, accounts, TickTick**
+
+- Accounts persist: add identity/service, link/unlink services, lookup Used/Not used
+- Subscriptions persist: cost, period, renewal, autopay, category, **account + service**
+- Linking a subscription to an account+service also writes `account_services`
+- Account detail lists subscriptions on that identity
+- Due subscription cycles post expenses and advance `renewal_date`
+- Reminders persist per TickTick task ref; add/delete; Expo Notifications on native
+- TickTick: paste Open API token in Settings, pull incomplete tasks grouped by list
+- LifeOS never completes TickTick tasks
+
 **Not implemented**
 
-- Phase 3: subscription persistence + auto-create expenses on renewal
-- Phase 4: account persistence, create/edit accounts, link services
-- Phase 5: TickTick OAuth/token + Expo notification scheduling
 - Phase 6: polish only (no new features)
+- TickTick OAuth browser flow (token paste only)
+- Recurring LifeOS reminders
 
 ---
 
 ## What to do next
 
-Default next step: **Phase 3 — Subscription Tracker**.
+Default next step: **Phase 6 — polish**.
 
-1. Persist subscriptions with Drizzle (and a web fallback if preview still matters)
-2. Fields: name, cost, weekly/monthly/yearly, renewal date, autopay + method, expense category, optional account/service
-3. After that, auto-post due cycles into expenses and advance `renewal_date`
-4. Then Phase 4 (accounts), then Phase 5 (TickTick + notifications)
+Empty/loading/error states, form tightness, accessibility, verify notifications on a real Android device, verify TickTick token + failed-connection UI. Do not add product features.
 
 At the end of each phase report: what changed, files, schema, tests, limitations, next phase.
 

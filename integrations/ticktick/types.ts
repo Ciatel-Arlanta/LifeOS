@@ -16,7 +16,7 @@ export type TickTickConnectionState = 'disconnected' | 'connecting' | 'connected
 
 export type TickTickClient = {
   getConnectionState(): TickTickConnectionState;
-  connect(): Promise<void>;
+  connect(token?: string): Promise<void>;
   disconnect(): Promise<void>;
   listOpenTasks(): Promise<TickTickTask[]>;
 };

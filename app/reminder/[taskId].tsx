@@ -3,14 +3,18 @@ import { Screen } from '@/components/screen';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { getReminderTask } from '@/features/reminders/mock';
-import { useLocalSearchParams } from 'expo-router';
+import { useReminderActions, useReminderData } from '@/features/reminders/store';
+import { router, useLocalSearchParams } from 'expo-router';
 
 export default function ReminderTaskScreen() {
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
-  const task = getReminderTask(String(taskId));
+  const { tasks } = useReminderData();
+  const { removeReminder } = useReminderActions();
+  const task = tasks.find((item) => item.id === Number(taskId));
 
   if (!task) {
     return (
@@ -43,33 +47,36 @@ export default function ReminderTaskScreen() {
           {task.reminders.length === 0 ? (
             <EmptyState
               title="No extra reminders"
-              body="Add one later. TickTick still owns the task itself."
+              body="Add a date and time. TickTick still owns the task itself."
             />
           ) : (
             <Card className="px-4 py-0">
               {task.reminders.map((reminder, index) => (
-                <VStack
+                <HStack
                   key={reminder.id}
-                  space="xs"
-                  className={`py-3.5 ${
+                  className={`items-center justify-between py-3.5 ${
                     index < task.reminders.length - 1 ? 'border-b border-border' : ''
                   }`}>
-                  <Text bold>{reminder.fireAtLabel}</Text>
-                  <Text size="xs" className="font-mono text-muted-foreground">
-                    {reminder.enabled ? 'Scheduled' : 'Paused'}
-                  </Text>
-                </VStack>
+                  <VStack space="xs">
+                    <Text bold>{reminder.fireAtLabel}</Text>
+                    <Text size="xs" className="font-mono text-muted-foreground">
+                      {reminder.enabled ? 'Scheduled' : 'Paused'}
+                    </Text>
+                  </VStack>
+                  <Pressable onPress={() => void removeReminder(reminder.id)}>
+                    <Text size="sm" className="text-destructive">
+                      Remove
+                    </Text>
+                  </Pressable>
+                </HStack>
               ))}
             </Card>
           )}
         </VStack>
 
-        <Button isDisabled>
+        <Button onPress={() => router.push(`/reminder/new?taskId=${task.id}`)}>
           <ButtonText>Add reminder</ButtonText>
         </Button>
-        <Text size="sm" className="text-muted-foreground">
-          Scheduling is not wired yet.
-        </Text>
       </VStack>
     </Screen>
   );

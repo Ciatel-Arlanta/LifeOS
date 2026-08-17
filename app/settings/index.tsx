@@ -10,10 +10,10 @@ export default function SettingsScreen() {
     <Screen>
       <VStack space="lg">
         <Card className="p-4">
-          <Text bold>Expense data is saved</Text>
+          <Text bold>Local data</Text>
           <Text size="sm" className="mt-1 text-muted-foreground">
-            Categories and expenses persist locally. Subscriptions, reminders, and accounts are still
-            sample data.
+            Expenses, subscriptions, and accounts stay on this device. TickTick is connected from
+            here when you want lists.
           </Text>
         </Card>
 

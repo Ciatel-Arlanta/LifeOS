@@ -41,6 +41,8 @@ export default function RootLayout() {
             <Stack.Screen name="subscription/new" options={{ title: 'Add subscription' }} />
             <Stack.Screen name="subscription/[id]" options={{ title: 'Subscription' }} />
             <Stack.Screen name="reminder/[taskId]" options={{ title: 'Reminders' }} />
+            <Stack.Screen name="reminder/new" options={{ title: 'Add reminder' }} />
+            <Stack.Screen name="account/new" options={{ title: 'Add account' }} />
             <Stack.Screen name="account/lookup" options={{ title: 'Look up a service' }} />
             <Stack.Screen name="account/provider/[id]" options={{ title: 'Provider' }} />
             <Stack.Screen name="account/[id]" options={{ title: 'Account' }} />

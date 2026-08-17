@@ -1,16 +1,22 @@
 export type Reminder = {
   id: number;
-  fireAtLabel: string;
+  taskRefId: number;
+  fireAtMs: number;
   fireAtIso: string;
+  fireAtLabel: string;
   enabled: boolean;
+  expoNotificationId: string | null;
 };
 
 export type ReminderTask = {
-  id: string;
+  id: number;
+  ticktickTaskId: string;
   listId: string;
   listName: string;
   title: string;
+  dueAtMs: number | null;
   dueLabel: string | null;
+  isOpen: boolean;
   reminders: Reminder[];
 };
 
