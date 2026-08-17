@@ -18,6 +18,7 @@
         "backgroundColor": "#EDEEF2"
       },
       "package": "app.lifeos.personal",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
