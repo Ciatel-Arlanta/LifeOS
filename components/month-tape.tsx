@@ -10,21 +10,25 @@ export function MonthTape({
   totalMinor,
   shares,
   deltaLine,
+  subLabel = 'Spent so far',
 }: {
-  monthLabel: string;
+  monthLabel?: string;
   totalMinor: number;
   shares: CategoryShare[];
   deltaLine?: string | null;
+  subLabel?: string;
 }) {
   return (
     <Box className="rounded-xl bg-card px-5 py-5">
       <VStack space="xs">
-        <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
-          {monthLabel}
-        </Text>
+        {monthLabel ? (
+          <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
+            {monthLabel}
+          </Text>
+        ) : null}
         <Amount minor={totalMinor} size="xl" />
         <Text size="sm" className="text-muted-foreground">
-          {deltaLine ? `Spent so far · ${deltaLine}` : 'Spent so far'}
+          {deltaLine ? `${subLabel} · ${deltaLine}` : subLabel}
         </Text>
       </VStack>
 

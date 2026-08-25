@@ -28,28 +28,34 @@ import {
 import { formatMonthLabel, formatRelativeDay, formatWeekdayDate } from '@/utils/date';
 import { describeMonthDelta } from '@/utils/money';
 import { router } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
+  const [monthOffset, setMonthOffset] = useState(0);
+  const viewed = new Date(year, month - monthOffset, 1);
+  const viewYear = viewed.getFullYear();
+  const viewMonth = viewed.getMonth();
+  const isCurrentMonth = monthOffset === 0;
   const { expenses } = useExpenseData();
   const { subscriptions } = useSubscriptionData();
   const { openTasks } = useReminderData();
-  const total = monthTotal(expenses, year, month);
-  const shares = categoryBreakdown(expenses, year, month);
+  const total = monthTotal(expenses, viewYear, viewMonth);
+  const shares = categoryBreakdown(expenses, viewYear, viewMonth);
   const renewals = upcomingSubscriptions(subscriptions, 3, now);
   const reminders = upcomingReminders(openTasks, 3);
   const recent = expenses.slice(0, 4);
-  const monthRows = expensesForMonth(expenses, year, month);
-  const prevMonth = new Date(year, month - 1, 1);
+  const monthRows = expensesForMonth(expenses, viewYear, viewMonth);
+  const beforeViewed = new Date(viewYear, viewMonth - 1, 1);
   const deltaLine = describeMonthDelta(
     total,
-    monthTotal(expenses, prevMonth.getFullYear(), prevMonth.getMonth()),
-    formatMonthLabel(prevMonth.getFullYear(), prevMonth.getMonth())
+    monthTotal(expenses, beforeViewed.getFullYear(), beforeViewed.getMonth()),
+    formatMonthLabel(beforeViewed.getFullYear(), beforeViewed.getMonth())
   );
 
   return (
@@ -74,26 +80,44 @@ export default function HomeScreen() {
         </Pressable>
       </HStack>
 
+      <HStack className="mb-2 items-center justify-between">
+        <Pressable
+          onPress={() => setMonthOffset((value) => value + 1)}
+          accessibilityLabel="Previous month"
+          className="h-9 w-9 items-center justify-center rounded-full bg-card">
+          <Icon as={ChevronLeft} className="text-foreground" size="sm" />
+        </Pressable>
+        <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
+          {formatMonthLabel(viewYear, viewMonth)}
+        </Text>
+        <Pressable
+          onPress={() => setMonthOffset((value) => Math.max(0, value - 1))}
+          disabled={isCurrentMonth}
+          accessibilityLabel="Next month"
+          className={`h-9 w-9 items-center justify-center rounded-full bg-card ${
+            isCurrentMonth ? 'opacity-30' : ''
+          }`}>
+          <Icon as={ChevronRight} className="text-foreground" size="sm" />
+        </Pressable>
+      </HStack>
+
       {monthRows.length === 0 ? (
         <Card className="px-5 py-6">
           <VStack space="sm">
-            <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
-              {formatMonthLabel(year, month)}
-            </Text>
             <Heading size="3xl" className="font-display">
               ₹0
             </Heading>
             <Text size="sm" className="text-muted-foreground">
-              No spend recorded this month yet.
+              {isCurrentMonth ? 'No spend recorded this month yet.' : 'No expenses this month.'}
             </Text>
           </VStack>
         </Card>
       ) : (
         <MonthTape
-          monthLabel={formatMonthLabel(year, month)}
           totalMinor={total}
           shares={shares}
           deltaLine={deltaLine}
+          subLabel={isCurrentMonth ? 'Spent so far' : 'Total spend'}
         />
       )}
 
