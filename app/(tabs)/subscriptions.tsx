@@ -10,16 +10,21 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import {
   monthlyCommitmentMinor,
+  pausedSubscriptions,
   useSubscriptionData,
 } from '@/features/subscriptions/store';
 import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/types';
+import { activeSubscriptions } from '@/features/subscriptions/store';
 import { formatRelativeDay } from '@/utils/date';
 import { router } from 'expo-router';
 
 export default function SubscriptionsScreen() {
   const now = new Date();
   const { subscriptions } = useSubscriptionData();
-  const items = [...subscriptions].sort((a, b) => a.renewalDate.localeCompare(b.renewalDate));
+  const items = activeSubscriptions([...subscriptions]).sort((a, b) =>
+    a.renewalDate.localeCompare(b.renewalDate)
+  );
+  const paused = pausedSubscriptions([...subscriptions]);
 
   return (
     <Box className="flex-1 bg-background">
@@ -66,6 +71,26 @@ export default function SubscriptionsScreen() {
             ))}
           </Card>
         )}
+        {paused.length > 0 ? (
+          <Box className="mb-6">
+            <Text size="xs" className="mb-2 font-mono uppercase tracking-widest text-muted-foreground">
+              Paused · {paused.length}
+            </Text>
+            <Card className="px-4 py-0">
+              {paused.map((item, index) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => router.push(`/subscription/${item.id}`)}
+                  className={`py-3.5 ${index < paused.length - 1 ? 'border-b border-border' : ''}`}>
+                  <Box className="flex-row items-center justify-between">
+                    <Text className="flex-1 pr-3 text-muted-foreground">{item.name}</Text>
+                    <Amount minor={item.costMinor} size="sm" />
+                  </Box>
+                </Pressable>
+              ))}
+            </Card>
+          </Box>
+        ) : null}
       </Screen>
       <Fab size="md" placement="bottom right" onPress={() => router.push('/subscription/new')}>
         <FabIcon as={AddIcon} />

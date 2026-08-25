@@ -66,7 +66,20 @@ export function useSubscriptionActions() {
     await hydrateSubscriptions();
   }, []);
 
-  return { addSubscription, editSubscription, removeSubscription };
+  const setSubscriptionInactive = useCallback(async (id: number, inactive: boolean) => {
+    await repository.setSubscriptionInactive(id, inactive);
+    await hydrateSubscriptions();
+  }, []);
+
+  return { addSubscription, editSubscription, removeSubscription, setSubscriptionInactive };
+}
+
+export function activeSubscriptions(items: Subscription[]): Subscription[] {
+  return items.filter((item) => item.inactiveAtMs == null);
+}
+
+export function pausedSubscriptions(items: Subscription[]): Subscription[] {
+  return items.filter((item) => item.inactiveAtMs != null);
 }
 
 export function upcomingSubscriptions(
@@ -74,14 +87,14 @@ export function upcomingSubscriptions(
   limit = 3,
   now = new Date()
 ): Subscription[] {
-  return [...items]
+  return [...activeSubscriptions(items)]
     .filter((item) => daysUntil(item.renewalDate, now) >= 0)
     .sort((a, b) => a.renewalDate.localeCompare(b.renewalDate))
     .slice(0, limit);
 }
 
 export function monthlyCommitmentMinor(items: Subscription[]): number {
-  return items.reduce((sum, item) => {
+  return activeSubscriptions(items).reduce((sum, item) => {
     if (item.billingPeriod === 'monthly') return sum + item.costMinor;
     if (item.billingPeriod === 'yearly') return sum + Math.round(item.costMinor / 12);
     if (item.billingPeriod === 'weekly') return sum + item.costMinor * 4;

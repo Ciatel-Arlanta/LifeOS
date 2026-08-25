@@ -34,6 +34,7 @@ async function hydrateLabels(rows: (typeof subscriptions.$inferSelect)[]): Promi
         accountLabel: account ? `${provider?.name ?? 'Account'} · ${account.identifier}` : null,
         serviceId: row.serviceId,
         serviceName: service?.name ?? null,
+        inactiveAtMs: row.inactiveAt ? row.inactiveAt.getTime() : null,
       };
     })
     .sort((a, b) => a.renewalDate.localeCompare(b.renewalDate));
@@ -87,6 +88,14 @@ export async function updateRenewalDate(id: number, renewalDate: string): Promis
   await getDb()
     .update(subscriptions)
     .set({ renewalDate, updatedAt: new Date() })
+    .where(eq(subscriptions.id, id));
+}
+
+export async function setSubscriptionInactive(id: number, inactive: boolean): Promise<void> {
+  const now = new Date();
+  await getDb()
+    .update(subscriptions)
+    .set(inactive ? { inactiveAt: now, updatedAt: now } : { inactiveAt: null, updatedAt: now })
     .where(eq(subscriptions.id, id));
 }
 

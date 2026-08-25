@@ -24,6 +24,7 @@ export async function createSubscription(draft: SubscriptionDraft): Promise<Subs
     categoryName: '',
     accountLabel: null,
     serviceName: null,
+    inactiveAtMs: null,
   };
   data.items.push(item);
   data.nextId += 1;
@@ -40,6 +41,13 @@ export async function updateSubscription(id: number, draft: SubscriptionDraft): 
 export async function updateRenewalDate(id: number, renewalDate: string): Promise<void> {
   const data = store.read();
   data.items = data.items.map((item) => (item.id === id ? { ...item, renewalDate } : item));
+  store.write(data);
+}
+
+export async function setSubscriptionInactive(id: number, inactive: boolean): Promise<void> {
+  const data = store.read();
+  const at = inactive ? Date.now() : null;
+  data.items = data.items.map((item) => (item.id === id ? { ...item, inactiveAtMs: at } : item));
   store.write(data);
 }
 
