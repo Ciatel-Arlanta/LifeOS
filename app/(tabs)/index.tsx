@@ -26,6 +26,7 @@ import {
   useSubscriptionData,
 } from '@/features/subscriptions/store';
 import { formatMonthLabel, formatRelativeDay, formatWeekdayDate } from '@/utils/date';
+import { describeMonthDelta } from '@/utils/money';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +45,12 @@ export default function HomeScreen() {
   const reminders = upcomingReminders(openTasks, 3);
   const recent = expenses.slice(0, 4);
   const monthRows = expensesForMonth(expenses, year, month);
+  const prevMonth = new Date(year, month - 1, 1);
+  const deltaLine = describeMonthDelta(
+    total,
+    monthTotal(expenses, prevMonth.getFullYear(), prevMonth.getMonth()),
+    formatMonthLabel(prevMonth.getFullYear(), prevMonth.getMonth())
+  );
 
   return (
     <Screen>
@@ -82,7 +89,12 @@ export default function HomeScreen() {
           </VStack>
         </Card>
       ) : (
-        <MonthTape monthLabel={formatMonthLabel(year, month)} totalMinor={total} shares={shares} />
+        <MonthTape
+          monthLabel={formatMonthLabel(year, month)}
+          totalMinor={total}
+          shares={shares}
+          deltaLine={deltaLine}
+        />
       )}
 
       <Button className="mt-4" onPress={() => router.push('/expense/new')}>

@@ -15,6 +15,19 @@ export function rupeesToMinor(rupees: number): number {
   return Math.round(rupees * 100);
 }
 
+/** Sentence comparing this month to last. Returns null when last month had no spend. */
+export function describeMonthDelta(
+  currentMinor: number,
+  previousMinor: number,
+  previousLabel: string
+): string | null {
+  if (previousMinor <= 0) return null;
+  const diff = currentMinor - previousMinor;
+  if (diff === 0) return `Same as ${previousLabel}`;
+  const amount = formatInr(Math.abs(diff), { compact: true });
+  return diff > 0 ? `${amount} more than ${previousLabel}` : `${amount} less than ${previousLabel}`;
+}
+
 export function parseRupeeInput(value: string): number | null {
   const cleaned = value.replace(/[₹,\s]/g, '');
   if (!cleaned) return null;
