@@ -2,6 +2,7 @@ import { accountLabel, findAccount, getAccountSnapshot } from '@/features/accoun
 import { getExpenseSnapshot } from '@/features/expenses/store';
 import { daysUntil } from '@/utils/date';
 import { useCallback, useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 import * as repository from './repository';
 import type { Subscription, SubscriptionDraft } from './types';
@@ -43,6 +44,11 @@ export async function hydrateSubscriptions() {
   const rows = await repository.listSubscriptions();
   snapshot = { ready: true, subscriptions: rows.map(decorate) };
   emit();
+  if (Platform.OS === 'android') {
+    void import('@/widgets/refresh')
+      .then((m) => m.refreshAllWidgets())
+      .catch(() => {});
+  }
 }
 
 export function useSubscriptionData() {

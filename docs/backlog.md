@@ -26,7 +26,17 @@ Do not implement until the user has walked through the redesign.
 
 ## 3. Home-screen widgets
 
-Add widgets (Android/iOS home-screen widgets) surfacing LifeOS info at a glance — candidates: upcoming reminders, recent expenses, subscription renewals due soon. No decisions yet on which widgets or platform scope.
+~~Add Android home-screen widgets surfacing LifeOS info at a glance.~~ **Done 2026-08-25.**
+
+- Platform: Android only, via `react-native-android-widget` 0.22.1 (needs a dev-client build). iOS WidgetKit deferred.
+- Lineup: Spend 2×2 (resizes to 4×1), Renewals 4×2, Reminders 4×2, Glance 4×4. No quick-add launcher.
+- Theme: auto light/dark (`renderWidget({light,dark})`). Dark = `#18181B` card, `#FAFAFA` text, inverted tape ramp. Light = white card, existing tokens.
+- Type: Fraunces amounts, IBM Plex Mono labels/dates (uppercase), Figtree names — ttf bundled in `assets/fonts/` and registered via the config plugin.
+- Content maps 1:1 to dashboard helpers: `monthTotal` + `categoryBreakdown`, `upcomingSubscriptions` + `monthlyCommitmentMinor`, `upcomingReminders`. Tape bar is the only chart.
+- Rows deep-link via `OPEN_URI` on `lifeos://` (spend → `lifeos://expenses`, renewal → `lifeos://subscription/{id}`, reminder → `lifeos://reminder/{taskId}`).
+- Refresh: `updatePeriodMillis: 1800000` (30 min, handles midnight rollover) + `requestWidgetUpdate` on every `hydrateExpenses`/`hydrateSubscriptions`/`hydrateReminders`.
+- Code: `widgets/`, `widget-task-handler.tsx`, `index.ts` (entry), `app.json` plugin, `package.json` main.
+- Mockups (AI, layout ref): `docs/mockups/widgets/widget-{spend,renewals,reminders,glance,dark}.png`.
 
 ---
 

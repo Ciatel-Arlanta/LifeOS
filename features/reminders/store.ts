@@ -2,6 +2,7 @@ import { ticktickClient, hasTickTickToken } from '@/integrations/ticktick/client
 import { cancelLocalReminder, scheduleLocalReminder } from '@/notifications';
 import { useUiStore } from '@/store/ui';
 import { useCallback, useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 import * as repository from './repository';
 import type { ReminderListGroup, ReminderTask } from './types';
@@ -47,6 +48,11 @@ export async function hydrateReminders() {
   const tasks = await repository.listTasks();
   snapshot = { ...snapshot, ready: true, tasks };
   emit();
+  if (Platform.OS === 'android') {
+    void import('@/widgets/refresh')
+      .then((m) => m.refreshAllWidgets())
+      .catch(() => {});
+  }
 }
 
 export async function syncTickTickTasks() {

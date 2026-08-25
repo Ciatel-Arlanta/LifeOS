@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -44,6 +44,7 @@
     "react-aria": "3.45.0",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-android-widget": "^0.22.1",
     "react-native-css": "3.0.4",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "5.6.1",

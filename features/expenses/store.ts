@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 import * as repository from './repository';
 import type { Expense, ExpenseCategory, ExpenseDraft } from './types';
@@ -33,6 +34,11 @@ export async function hydrateExpenses() {
   ]);
   snapshot = { ready: true, expenses, categories };
   emit();
+  if (Platform.OS === 'android') {
+    void import('@/widgets/refresh')
+      .then((m) => m.refreshAllWidgets())
+      .catch(() => {});
+  }
 }
 
 export function getExpenseSnapshot() {

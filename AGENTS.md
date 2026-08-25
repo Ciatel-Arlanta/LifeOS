@@ -55,6 +55,7 @@ Web preview (`expo start --web`) is useful for layout. SQLite WASM is not wired 
 | Client state | Zustand — UI/session only |
 | Data | SQLite + Drizzle on Android; localStorage fallback on web |
 | Notifications | Expo Notifications (stub only so far) |
+| Widgets | `react-native-android-widget` 0.22.1 — Android home-screen widgets |
 | Package manager | Bun |
 
 `Plan.md` originally listed React Native Reusables. That was replaced with Gluestack. Do not reintroduce Reusables.
@@ -71,6 +72,10 @@ Gluestack rules that matter here:
 ## Folder map
 
 ```
+index.ts                  Expo Router entry + widget handler registration (main)
+widget-task-handler.tsx    headless handler — routes widget names to renderers
+widgets/                  palette, data, refresh, Spend/Renewals/Reminders/Glance widgets (FlexWidget/TextWidget)
+assets/fonts/             Fraunces/IBMPlexMono/Figtree ttf bundled for widgets + app
 app/                      Expo Router screens
   (tabs)/                 Home, Expenses, Subscriptions, Reminders, Accounts
   expense/                add + detail/edit
@@ -89,7 +94,7 @@ store/                    Zustand (TickTick connection status)
 notifications/            isolated; schedule/cancel not implemented
 integrations/ticktick/    interface + stub
 services/                 later business ops (subscription auto-post stub)
-docs/mockups/             AI mockups for layout reference only
+docs/mockups/             AI mockups + widget spec boards (widgets/*.png)
 Plan.md                   original spec
 AGENTS.md                 this file
 ```
@@ -240,11 +245,15 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 - TickTick: paste Open API token in Settings, pull incomplete tasks grouped by list
 - LifeOS never completes TickTick tasks
 
+**Phase 6 — widgets (live)**
+
+- Android home-screen widgets: Spend (2×2→4×1), Renewals 4×2, Reminders 4×2, Glance 4×4; auto light/dark; `react-native-android-widget` 0.22.1 via config plugin; fonts bundled in `assets/fonts/`; `updatePeriodMillis` 30 min + `requestWidgetUpdate` on every hydrate; deep links via `lifeos://` (`OPEN_URI`); entry moved to `index.ts` so the headless handler is registered.
+
 **Not implemented**
 
-- Phase 6: polish only (no new features)
 - TickTick OAuth browser flow (token paste only)
 - Recurring LifeOS reminders
+- Phase 6 general polish (empty/loading/error tightening — widgets are the first slice)
 
 ---
 

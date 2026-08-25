@@ -46,7 +46,62 @@
           "defaultChannel": "lifeos-reminders-v2"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/Fraunces_600SemiBold.ttf",
+            "./assets/fonts/IBMPlexMono_400Regular.ttf",
+            "./assets/fonts/Figtree_600SemiBold.ttf",
+            "./assets/fonts/Figtree_500Medium.ttf",
+            "./assets/fonts/Figtree_400Regular.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "Spend",
+              "label": "LifeOS · Spend",
+              "description": "Current month spend with category tape",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Renewals",
+              "label": "LifeOS · Coming up",
+              "description": "Next subscription renewals",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Reminders",
+              "label": "LifeOS · Reminders",
+              "description": "Next reminders from TickTick",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Glance",
+              "label": "LifeOS · Glance",
+              "description": "Spend, renewals and reminders at a glance",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
