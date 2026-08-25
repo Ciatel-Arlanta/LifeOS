@@ -67,6 +67,7 @@ export const subscriptions = sqliteTable('subscriptions', {
   }),
   accountId: integer('account_id').references(() => accounts.id, { onDelete: 'set null' }),
   serviceId: integer('service_id').references(() => services.id, { onDelete: 'set null' }),
+  inactiveAt: integer('inactive_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });

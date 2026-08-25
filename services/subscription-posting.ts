@@ -18,6 +18,7 @@ export async function postDueSubscriptionExpenses(now = new Date()): Promise<num
   let posted = 0;
 
   for (const item of items) {
+    if (item.inactiveAtMs != null) continue;
     let cursor = item.renewalDate;
     let guard = 0;
     while (cursor <= today && guard < 36) {

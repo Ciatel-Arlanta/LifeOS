@@ -20,9 +20,10 @@ export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { subscriptions } = useSubscriptionData();
   const { accounts } = useAccountData();
-  const { editSubscription, removeSubscription } = useSubscriptionActions();
+  const { editSubscription, removeSubscription, setSubscriptionInactive } = useSubscriptionActions();
   const item = subscriptions.find((row) => row.id === Number(id));
   const [linking, setLinking] = useState(false);
+  const paused = item?.inactiveAtMs != null;
 
   if (!item) {
     return (
@@ -60,6 +61,11 @@ export default function SubscriptionDetailScreen() {
             {item.name}
           </Heading>
           <Amount minor={item.costMinor} size="lg" />
+          {paused ? (
+            <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
+              Paused · no expenses posted
+            </Text>
+          ) : null}
         </VStack>
 
         <Card className="p-4">
@@ -82,8 +88,16 @@ export default function SubscriptionDetailScreen() {
         </Card>
 
         <Text size="sm" className="text-muted-foreground">
-          When this renews, LifeOS adds a transaction automatically.
+          {paused
+            ? 'Paused subscriptions stay in your history but no expenses are posted.'
+            : 'When this renews, LifeOS adds a transaction automatically.'}
         </Text>
+
+        <Button
+          variant="outline"
+          onPress={() => void setSubscriptionInactive(item.id, !paused)}>
+          <ButtonText>{paused ? 'Resume subscription' : 'Pause subscription'}</ButtonText>
+        </Button>
 
         {linking ? (
           <VStack space="sm">

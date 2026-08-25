@@ -17,6 +17,7 @@ export type Subscription = {
   accountLabel: string | null;
   serviceId: number | null;
   serviceName: string | null;
+  inactiveAtMs: number | null;
 };
 
 export type SubscriptionDraft = {

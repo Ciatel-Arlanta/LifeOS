@@ -1,0 +1,1 @@
+ALTER TABLE `subscriptions` ADD `inactive_at` integer;
