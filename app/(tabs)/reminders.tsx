@@ -6,15 +6,56 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { syncTickTickTasks, useReminderData } from '@/features/reminders/store';
+import {
+  getNotificationPermission,
+  openNotificationSettings,
+  requestNotificationPermission,
+  supportsNotifications,
+} from '@/notifications';
 import { useUiStore } from '@/store/ui';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 
 export default function RemindersScreen() {
   const status = useUiStore((state) => state.ticktickStatus);
   const { groups, error } = useReminderData();
+  const [permission, setPermission] = useState<'granted' | 'denied' | 'undetermined' | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    if (!supportsNotifications()) return;
+    void getNotificationPermission().then((next) => {
+      if (active) setPermission(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handlePermissionAction = async () => {
+    const next =
+      permission === 'undetermined'
+        ? await requestNotificationPermission()
+        : await (openNotificationSettings(), getNotificationPermission());
+    setPermission(next);
+  };
 
   return (
     <Screen>
+      {supportsNotifications() && permission && permission !== 'granted' ? (
+        <Card className="mb-6 p-4">
+          <Text bold>Reminders are muted</Text>
+          <Text size="sm" className="mt-1 text-muted-foreground">
+            LifeOS can't show reminder notifications without permission.
+          </Text>
+          <Button variant="outline" className="mt-4" onPress={() => void handlePermissionAction()}>
+            <ButtonText>
+              {permission === 'undetermined' ? 'Allow notifications' : 'Open settings'}
+            </ButtonText>
+          </Button>
+        </Card>
+      ) : null}
+
       <Card className="mb-6 p-4">
         <Text bold>TickTick owns the tasks</Text>
         <Text size="sm" className="mt-1 text-muted-foreground">

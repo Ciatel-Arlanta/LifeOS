@@ -1,6 +1,6 @@
 import { PermissionStatus } from 'expo-modules-core';
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 try {
   Notifications.setNotificationHandler({
@@ -53,4 +53,9 @@ export async function cancelLocalReminder(notificationId: string | null): Promis
 
 export function supportsNotifications(): boolean {
   return Platform.OS !== 'web';
+}
+
+export async function openNotificationSettings(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  Linking.openSettings();
 }
