@@ -9,10 +9,12 @@ export function MonthTape({
   monthLabel,
   totalMinor,
   shares,
+  deltaLine,
 }: {
   monthLabel: string;
   totalMinor: number;
   shares: CategoryShare[];
+  deltaLine?: string | null;
 }) {
   return (
     <Box className="rounded-xl bg-card px-5 py-5">
@@ -22,7 +24,7 @@ export function MonthTape({
         </Text>
         <Amount minor={totalMinor} size="xl" />
         <Text size="sm" className="text-muted-foreground">
-          Spent so far
+          {deltaLine ? `Spent so far · ${deltaLine}` : 'Spent so far'}
         </Text>
       </VStack>
 
