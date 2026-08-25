@@ -2,6 +2,9 @@ import { PermissionStatus } from 'expo-modules-core';
 import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
+const REMINDER_CHANNEL_ID = 'lifeos-reminders-v2';
+const SNOOZE_CATEGORY_ID = 'reminder-snooze';
+
 try {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -11,8 +14,27 @@ try {
       shouldSetBadge: false,
     }),
   });
+  void Notifications.setNotificationCategoryAsync(SNOOZE_CATEGORY_ID, [
+    { identifier: 'SNOOZE_1H', buttonTitle: 'Snooze 1h', options: { opensAppToForeground: false } },
+    { identifier: 'SNOOZE_1D', buttonTitle: 'Snooze 1d', options: { opensAppToForeground: false } },
+  ]);
 } catch {
   // Notifications are unavailable in some environments (web preview).
+}
+
+export const SNOOZE_LEAD_MINUTES: Record<string, number> = {
+  SNOOZE_1H: 60,
+  SNOOZE_1D: 60 * 24,
+};
+
+export function addNotificationResponseListener(
+  callback: (response: Notifications.NotificationResponse) => void
+) {
+  return Notifications.addNotificationResponseReceivedListener(callback);
+}
+
+export function getLastNotificationResponse(): Promise<Notifications.NotificationResponse | null> {
+  return Notifications.getLastNotificationResponseAsync() ?? Promise.resolve(null);
 }
 
 export async function getNotificationPermission(): Promise<Notifications.PermissionStatus> {
@@ -28,8 +50,6 @@ export async function requestNotificationPermission(): Promise<Notifications.Per
   const next = await Notifications.requestPermissionsAsync();
   return next.status;
 }
-
-const REMINDER_CHANNEL_ID = 'lifeos-reminders-v2';
 
 async function ensureReminderChannel(): Promise<string | undefined> {
   if (Platform.OS !== 'android') return undefined;
@@ -50,13 +70,19 @@ export async function scheduleLocalReminder(input: {
   title: string;
   body: string;
   fireAt: Date;
+  reminderId?: number;
 }): Promise<string | null> {
   if (Platform.OS === 'web') return `web-${input.fireAt.getTime()}`;
   if (input.fireAt.getTime() <= Date.now()) return null;
   await requestNotificationPermission();
   const channelId = await ensureReminderChannel();
   return Notifications.scheduleNotificationAsync({
-    content: { title: input.title, body: input.body },
+    content: {
+      title: input.title,
+      body: input.body,
+      categoryIdentifier: SNOOZE_CATEGORY_ID,
+      data: input.reminderId != null ? { reminderId: input.reminderId } : undefined,
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: input.fireAt,

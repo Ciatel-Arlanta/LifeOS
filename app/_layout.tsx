@@ -1,6 +1,7 @@
 import '@/global.css';
 
 import { DatabaseProvider } from '@/db/provider';
+import { SnoozeResponseHandler } from '@/features/reminders/snooze-handler';
 import { useAppFonts } from '@/lib/fonts';
 import { NAV_THEME, PALETTE } from '@/lib/theme';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
@@ -26,6 +27,7 @@ export default function RootLayout() {
       <ThemeProvider value={NAV_THEME.light}>
         <StatusBar style="dark" />
         <DatabaseProvider>
+          <SnoozeResponseHandler />
           <Stack
             screenOptions={{
               headerShadowVisible: false,
