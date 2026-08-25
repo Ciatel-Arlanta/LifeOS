@@ -9,6 +9,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
+import { tapLight } from '@/lib/haptics';
 import { TRANSACTION_MODE_LABEL, TRANSACTION_MODES, type TransactionMode } from '@/features/expenses/types';
 import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
@@ -51,6 +52,7 @@ export default function NewExpenseScreen() {
       transactionMode: mode,
       occurredAt: date,
     });
+    tapLight();
     router.back();
   }
 

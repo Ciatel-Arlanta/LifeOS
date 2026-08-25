@@ -8,6 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
+import { tapLight, tapWarning } from '@/lib/haptics';
 import { useState } from 'react';
 
 export default function CategoriesSettingsScreen() {
@@ -19,6 +20,7 @@ export default function CategoriesSettingsScreen() {
     const trimmed = name.trim();
     if (!trimmed) return;
     await addCategory(trimmed);
+    tapLight();
     setName('');
   }
 
@@ -39,7 +41,11 @@ export default function CategoriesSettingsScreen() {
                   index < categories.length - 1 ? 'border-b border-border' : ''
                 }`}>
                 <Text bold>{category.name}</Text>
-                <Pressable onPress={() => removeCategory(category.id)}>
+                <Pressable
+                  onPress={() => {
+                    tapWarning();
+                    removeCategory(category.id);
+                  }}>
                   <Text size="sm" className="text-destructive">
                     Remove
                   </Text>
