@@ -29,6 +29,23 @@ export async function requestNotificationPermission(): Promise<Notifications.Per
   return next.status;
 }
 
+const REMINDER_CHANNEL_ID = 'lifeos-reminders-v2';
+
+async function ensureReminderChannel(): Promise<string | undefined> {
+  if (Platform.OS !== 'android') return undefined;
+  const existing = await Notifications.getNotificationChannelAsync(REMINDER_CHANNEL_ID);
+  if (!existing) {
+    await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
+      name: 'Reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    });
+  }
+  return REMINDER_CHANNEL_ID;
+}
+
 export async function scheduleLocalReminder(input: {
   title: string;
   body: string;
@@ -37,11 +54,13 @@ export async function scheduleLocalReminder(input: {
   if (Platform.OS === 'web') return `web-${input.fireAt.getTime()}`;
   if (input.fireAt.getTime() <= Date.now()) return null;
   await requestNotificationPermission();
+  const channelId = await ensureReminderChannel();
   return Notifications.scheduleNotificationAsync({
     content: { title: input.title, body: input.body },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: input.fireAt,
+      channelId,
     },
   });
 }
