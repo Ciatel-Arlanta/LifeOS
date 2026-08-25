@@ -18,6 +18,7 @@ import {
   type BillingPeriod,
 } from '@/features/subscriptions/types';
 import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
+import { tapLight } from '@/lib/haptics';
 import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -67,6 +68,7 @@ export default function NewSubscriptionScreen() {
       accountId,
       serviceId: linkedServiceId ?? null,
     });
+    tapLight();
     router.back();
   }
 

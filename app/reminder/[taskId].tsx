@@ -8,6 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useReminderActions, useReminderData } from '@/features/reminders/store';
+import { tapWarning } from '@/lib/haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
 export default function ReminderTaskScreen() {
@@ -63,7 +64,11 @@ export default function ReminderTaskScreen() {
                       {reminder.enabled ? 'Scheduled' : 'Paused'}
                     </Text>
                   </VStack>
-                  <Pressable onPress={() => void removeReminder(reminder.id)}>
+                  <Pressable
+                    onPress={() => {
+                      tapWarning();
+                      void removeReminder(reminder.id);
+                    }}>
                     <Text size="sm" className="text-destructive">
                       Remove
                     </Text>

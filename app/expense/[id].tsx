@@ -18,6 +18,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
+import { tapLight, tapWarning } from '@/lib/haptics';
 import { TRANSACTION_MODE_LABEL, TRANSACTION_MODES, type TransactionMode } from '@/features/expenses/types';
 import { formatLongDate } from '@/utils/date';
 import { formatInr, parseRupeeInput } from '@/utils/money';
@@ -67,10 +68,12 @@ export default function ExpenseDetailScreen() {
       transactionMode: mode,
       occurredAt: date,
     });
+    tapLight();
     setEditing(false);
   }
 
   async function onDelete() {
+    tapWarning();
     await removeExpense(expense!.id);
     setConfirm(false);
     router.back();

@@ -8,6 +8,7 @@ import { VStack } from '@/components/ui/vstack';
 import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from '@/features/accounts/helpers';
 import { useAccountActions, useAccountData } from '@/features/accounts/store';
 import type { AccountType } from '@/features/accounts/types';
+import { tapLight } from '@/lib/haptics';
 import { todayIso } from '@/utils/date';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -43,6 +44,7 @@ export default function NewAccountScreen() {
       purpose,
       createdDate: todayIso(),
     });
+    tapLight();
     router.replace(`/account/${created.id}`);
   }
 

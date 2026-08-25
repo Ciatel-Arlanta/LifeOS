@@ -12,6 +12,7 @@ import { VStack } from '@/components/ui/vstack';
 import { providerRoles } from '@/features/accounts/helpers';
 import { useAccountActions, useAccountData } from '@/features/accounts/store';
 import { useSubscriptionData } from '@/features/subscriptions/store';
+import { tapLight, tapWarning } from '@/lib/haptics';
 import { formatLongDate } from '@/utils/date';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -37,6 +38,7 @@ export default function AccountDetailScreen() {
   async function link() {
     if (!serviceName.trim() || !account) return;
     await addServiceLink(account.id, serviceName);
+    tapLight();
     setServiceName('');
   }
 
@@ -143,6 +145,7 @@ export default function AccountDetailScreen() {
         variant="destructive"
         className="mt-8"
         onPress={async () => {
+          tapWarning();
           await removeAccount(account.id);
           router.back();
         }}>

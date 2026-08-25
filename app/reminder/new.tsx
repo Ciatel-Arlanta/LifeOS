@@ -6,6 +6,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useReminderActions, useReminderData } from '@/features/reminders/store';
+import { tapLight } from '@/lib/haptics';
 import { toIsoDate, todayIso } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -55,6 +56,7 @@ export default function NewReminderScreen() {
       return;
     }
     await addReminder(task!.id, fireAt);
+    tapLight();
     router.back();
   }
 

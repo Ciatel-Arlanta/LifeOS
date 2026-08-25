@@ -12,6 +12,7 @@ import { useAccountData } from '@/features/accounts/store';
 import { useSubscriptionActions, useSubscriptionData } from '@/features/subscriptions/store';
 import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/types';
 import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
+import { tapLight, tapWarning } from '@/lib/haptics';
 import { formatLongDate } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -95,7 +96,11 @@ export default function SubscriptionDetailScreen() {
 
         <Button
           variant="outline"
-          onPress={() => void setSubscriptionInactive(item.id, !paused)}>
+          onPress={() => {
+            if (paused) tapLight();
+            else tapWarning();
+            void setSubscriptionInactive(item.id, !paused);
+          }}>
           <ButtonText>{paused ? 'Resume subscription' : 'Pause subscription'}</ButtonText>
         </Button>
 
@@ -125,6 +130,7 @@ export default function SubscriptionDetailScreen() {
         <Button
           variant="destructive"
           onPress={async () => {
+            tapWarning();
             await removeSubscription(item.id);
             router.back();
           }}>
