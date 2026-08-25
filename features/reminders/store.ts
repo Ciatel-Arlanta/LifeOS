@@ -88,16 +88,25 @@ export function useReminderData() {
   };
 }
 
+async function scheduleFor(
+  task: ReminderTask | undefined,
+  reminderId: number,
+  fireAt: Date
+): Promise<void> {
+  const notificationId = await scheduleLocalReminder({
+    title: task?.title ?? 'LifeOS reminder',
+    body: 'A TickTick task needs your attention.',
+    fireAt,
+    reminderId,
+  });
+  if (notificationId) await repository.setReminderNotification(reminderId, notificationId);
+}
+
 export function useReminderActions() {
   const addReminder = useCallback(async (taskRefId: number, fireAt: Date) => {
     const task = snapshot.tasks.find((item) => item.id === taskRefId);
     const created = await repository.createReminder(taskRefId, fireAt.getTime());
-    const notificationId = await scheduleLocalReminder({
-      title: task?.title ?? 'LifeOS reminder',
-      body: 'A TickTick task needs your attention.',
-      fireAt,
-    });
-    if (notificationId) await repository.setReminderNotification(created.id, notificationId);
+    await scheduleFor(task, created.id, fireAt);
     await hydrateReminders();
   }, []);
 
@@ -108,6 +117,17 @@ export function useReminderActions() {
   }, []);
 
   return { addReminder, removeReminder };
+}
+
+export async function snoozeReminder(reminderId: number, minutes: number): Promise<void> {
+  const removed = await repository.deleteReminder(reminderId);
+  if (!removed) return;
+  if (removed.expoNotificationId) await cancelLocalReminder(removed.expoNotificationId);
+  const fireAt = new Date(Date.now() + minutes * 60_000);
+  const created = await repository.createReminder(removed.taskRefId, fireAt.getTime());
+  await hydrateReminders();
+  const task = snapshot.tasks.find((item) => item.id === removed.taskRefId);
+  await scheduleFor(task, created.id, fireAt);
 }
 
 export function upcomingReminders(tasks: ReminderTask[], limit = 3) {
