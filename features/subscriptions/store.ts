@@ -1,4 +1,3 @@
-import { accountLabel, findAccount, getAccountSnapshot } from '@/features/accounts/store';
 import { getExpenseSnapshot } from '@/features/expenses/store';
 import { daysUntil } from '@/utils/date';
 import { useCallback, useSyncExternalStore } from 'react';
@@ -29,14 +28,10 @@ function getSnapshot() {
 }
 
 function decorate(item: Subscription): Subscription {
-  const account = item.accountId ? findAccount(item.accountId) : undefined;
   const category = getExpenseSnapshot().categories.find((row) => row.id === item.categoryId);
-  const service = getAccountSnapshot().services.find((row) => row.id === item.serviceId);
   return {
     ...item,
     categoryName: category?.name ?? item.categoryName ?? 'Uncategorized',
-    accountLabel: account ? accountLabel(account) : null,
-    serviceName: service?.name ?? item.serviceName,
   };
 }
 

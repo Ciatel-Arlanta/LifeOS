@@ -81,7 +81,7 @@ app/                      Expo Router screens
   expense/                add + detail/edit
   subscription/           add + detail (UI only)
   reminder/               TickTick task + LifeOS reminder list (UI only)
-  account/                lookup, provider, account detail (mock data)
+  account/                lookup, identity detail, membership add, identity add
   settings/               categories (live), TickTick stub
 components/               app-level pieces (Screen, Amount, Chip, MonthTape, …)
 components/ui/            Gluestack components
@@ -117,9 +117,9 @@ Do not reopen these unless the user explicitly changes them.
 | Subscription → expense | When a cycle is due, LifeOS **creates an expense**. Optional `subscription_id` on expenses. Advance `renewal_date` by the period. Catch up missed cycles. Autopay Other maps to Card |
 | Billing | Closed set: weekly / monthly / yearly + a `renewal_date` |
 | Subscription category | Required for auto-posting so the generated expense has a category |
-| Account fields | Provider, identifier, type (`personal` / `college` / `work` / `other`), purpose, created date, linked services. **No status** |
-| Provider roles | `isIdentity` and/or `isService`. Dual is allowed (GitHub) |
-| Service lookup | Used / Not used only among **identity** accounts (Google, Microsoft, GitHub, …). Not Anthropic/OpenAI/etc. **No Recommended flag** |
+| Account fields | **Identity**: provider (issuer), identifier, type (`personal` / `college` / `work` / `other`), purpose, created date. **Membership** (service account): service provider + signed-in identity, optional note/date. Multiple memberships per service allowed. **No status** |
+| Provider registry | Single `providers` table — any provider can issue identities or host service accounts. No `isIdentity`/`isService` flags |
+| Service lookup | Search a service → **Accounts here** (memberships at that service) vs **Not used** (identities with no membership there). No Recommended flag |
 | TickTick | Incomplete tasks only, grouped by TickTick lists. LifeOS never completes or edits the task |
 | Reminders | Multiple one-shot local datetimes per TickTick task. No recurrence in v1 |
 | LifeOS login | None. Single-device local app |
@@ -195,11 +195,11 @@ Voice: short, sentence case, no filler. Empty states say what to do next.
 
 See `db/schema.ts`.
 
-- `providers` — `isIdentity`, `isService`
-- `accounts` — no status
-- `services`, `account_services`
+- `providers` — name only (services merged into it)
+- `identities` — issuer provider + identifier + type, no status
+- `memberships` — service provider + identity, optional note/date (multiple per service allowed)
 - `expense_categories`, `expenses` (`subscription_id` nullable)
-- `subscriptions` — optional `account_id`, `service_id`, `category_id`
+- `subscriptions` — optional `membership_id`, `category_id`
 - `ticktick_task_refs`, `reminder_configs`
 
 Money is integer paise. After schema changes: `bun run db:generate` and commit `drizzle/`.
@@ -210,7 +210,7 @@ Money is integer paise. After schema changes: `bun run db:generate` and commit `
 |---|---|---|
 | Expenses + categories | SQLite | `lifeos.expense-data` |
 | Subscriptions | SQLite | `lifeos.subscription-data` |
-| Accounts / providers / services | SQLite | `lifeos.account-data` |
+| Accounts / providers / services | SQLite | `lifeos.identity-data` |
 | Reminder configs + task refs | SQLite | `lifeos.reminder-data` |
 | TickTick token | SecureStore | `lifeos.ticktick-token` |
 
@@ -240,6 +240,7 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 - Subscriptions persist: cost, period, renewal, autopay, category, **account + service**
 - Linking a subscription to an account+service also writes `account_services`
 - Account detail lists subscriptions on that identity
+- **Account redesign (identities + memberships)**: providers merged (no role flags); many memberships per service, each anchored to a sign-in identity (e.g. `achintya@gmail.com → Claude #1`, `achintya2@gmail.com → Claude #2`); subscriptions link via optional `membership_id`; lookup now lists memberships vs identities without memberships (migration `0004`/`0005`).
 - Due subscription cycles post expenses and advance `renewal_date`
 - Reminders persist per TickTick task ref; add/delete; Expo Notifications on native
 - TickTick: paste Open API token in Settings, pull incomplete tasks grouped by list

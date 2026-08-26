@@ -6,16 +6,7 @@ Not scheduled, not designed yet. Logged here so they aren't lost. Implement only
 
 ## Open
 
-### Account Manager — rethink account/identity-provider modeling
-
-Current Account Manager (Module 4 in `Plan.md`) needs more thought on how accounts and identity providers relate to each other. Specifics TBD — user wants to discuss the model before any implementation.
-
-Open questions to raise when this gets picked up:
-
-- How providers, accounts, and identities are structured relative to each other
-- Whether the current schema (`providers` / `accounts` / services / account-service links) still fits
-
-Do not implement until the user has walked through the redesign.
+— nothing queued — pick what matters next.
 
 ---
 
@@ -23,6 +14,7 @@ Do not implement until the user has walked through the redesign.
 
 | Item | When | Merge commit |
 |---|---|---|
+| Account Manager redesign (identities + memberships: many logins per service, merged provider registry, `membership_id` on subscriptions) | | `0004`/`0005` |
 | Reminder notification sound (custom chime, channel v3) | 2026-08-26 | `40e6f04` |
 | Home-screen widgets (Spend/Renewals/Reminders/Glance) | 2026-08-25 | `8604740` |
 | Subscription pause/cancel marking (`inactive_at`, excluded from auto-posting) | | `ebb6175` |

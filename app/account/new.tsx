@@ -1,6 +1,13 @@
 import { Chip } from '@/components/chip';
 import { Screen } from '@/components/screen';
 import { Button, ButtonText } from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
 import { HStack } from '@/components/ui/hstack';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
@@ -13,41 +20,33 @@ import { todayIso } from '@/utils/date';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-export default function NewAccountScreen() {
+export default function NewIdentityScreen() {
   const { providers } = useAccountData();
-  const { addAccount } = useAccountActions();
+  const { addIdentity } = useAccountActions();
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providerName, setProviderName] = useState('');
-  const [isIdentity, setIsIdentity] = useState(true);
-  const [isService, setIsService] = useState(false);
   const [identifier, setIdentifier] = useState('');
   const [type, setType] = useState<AccountType>('personal');
   const [purpose, setPurpose] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ provider?: string; identifier?: string }>({});
   const [saving, setSaving] = useState(false);
 
   async function save() {
     if (saving) return;
-    if (!providerId && !providerName.trim()) {
-      setError('Pick or name a provider.');
-      return;
-    }
-    if (!identifier.trim()) {
-      setError('Add an email or label.');
-      return;
-    }
-    if (!isIdentity && !isService) {
-      setError('Pick at least one role for this provider.');
+    const next: typeof errors = {};
+    if (!providerId && !providerName.trim()) next.provider = 'Pick or name an issuer.';
+    if (!identifier.trim()) next.identifier = 'Add an email or username.';
+    if (next.provider || next.identifier) {
+      setErrors(next);
       tapLight();
       return;
     }
+    setErrors({});
     setSaving(true);
     try {
-      const created = await addAccount({
+      const created = await addIdentity({
         providerId,
         providerName,
-        isIdentity,
-        isService,
         identifier,
         type,
         purpose,
@@ -63,10 +62,10 @@ export default function NewAccountScreen() {
   return (
     <Screen>
       <VStack space="lg">
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Provider
-          </Text>
+        <FormControl isInvalid={Boolean(errors.provider)}>
+          <FormControlLabel>
+            <FormControlLabelText>Issued by</FormControlLabelText>
+          </FormControlLabel>
           <HStack space="sm" className="flex-wrap">
             {providers.map((provider) => (
               <Chip
@@ -76,52 +75,47 @@ export default function NewAccountScreen() {
                 onPress={() => {
                   setProviderId(provider.id);
                   setProviderName(provider.name);
-                  setIsIdentity(provider.isIdentity);
-                  setIsService(provider.isService);
                 }}
               />
             ))}
           </HStack>
-          <Input>
+          <Input className="mt-2">
             <InputField
               value={providerName}
               onChangeText={(value) => {
                 setProviderName(value);
                 setProviderId(null);
               }}
-              placeholder="Google, Microsoft, GitHub…"
-              accessibilityLabel="Provider name"
+              placeholder="Google, Microsoft, Proton…"
+              accessibilityLabel="Issuer name"
             />
           </Input>
-        </VStack>
+          {errors.provider ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.provider}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
 
-        <VStack space="sm">
-          <Text size="sm" bold>
-            This provider is
-          </Text>
-          <HStack space="sm">
-            <Chip label="Identity" selected={isIdentity} onPress={() => setIsIdentity((value) => !value)} />
-            <Chip label="Service" selected={isService} onPress={() => setIsService((value) => !value)} />
-          </HStack>
-          <Text size="sm" className="text-muted-foreground">
-            Identity is a sign-in (Google). Service is a destination (OpenAI). GitHub can be both.
-          </Text>
-        </VStack>
-
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Identifier
-          </Text>
+        <FormControl isInvalid={Boolean(errors.identifier)}>
+          <FormControlLabel>
+            <FormControlLabelText>Email or username</FormControlLabelText>
+          </FormControlLabel>
           <Input>
             <InputField
               value={identifier}
               onChangeText={setIdentifier}
               placeholder="personal@gmail.com"
               autoCapitalize="none"
-              accessibilityLabel="Email or label"
+              accessibilityLabel="Email or username"
             />
           </Input>
-        </VStack>
+          {errors.identifier ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.identifier}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
 
         <VStack space="sm">
           <Text size="sm" bold>
@@ -148,14 +142,8 @@ export default function NewAccountScreen() {
           </Input>
         </VStack>
 
-        {error ? (
-          <Text size="sm" className="text-destructive">
-            {error}
-          </Text>
-        ) : null}
-
         <Button onPress={() => void save()} isDisabled={saving}>
-          <ButtonText>{saving ? 'Saving…' : 'Save account'}</ButtonText>
+          <ButtonText>{saving ? 'Saving…' : 'Save identity'}</ButtonText>
         </Button>
       </VStack>
     </Screen>

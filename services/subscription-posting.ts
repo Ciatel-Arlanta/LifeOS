@@ -1,4 +1,3 @@
-import { ensureService, hydrateAccounts, linkService } from '@/features/accounts/store';
 import { getExpenseSnapshot } from '@/features/expenses/store';
 import * as expenseRepo from '@/features/expenses/repository';
 import * as subscriptionRepo from '@/features/subscriptions/repository';
@@ -43,20 +42,4 @@ export async function postDueSubscriptionExpenses(now = new Date()): Promise<num
   }
 
   return posted;
-}
-
-export async function ensureSubscriptionAccountService(
-  accountId: number | null,
-  serviceId: number | null,
-  serviceName?: string | null
-) {
-  if (!accountId) return serviceId;
-  let resolved = serviceId;
-  if (!resolved && serviceName) {
-    const service = await ensureService(serviceName);
-    resolved = service.id;
-  }
-  if (resolved) await linkService(accountId, resolved);
-  await hydrateAccounts();
-  return resolved;
 }

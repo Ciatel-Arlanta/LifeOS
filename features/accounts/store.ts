@@ -1,21 +1,20 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-import {
-  allAccounts,
-  identityProviders,
-  lookupService,
-  serviceProviders,
-} from './helpers';
+import { lookupService, membershipLabel } from './helpers';
 import * as repository from './repository';
-import type { Account, AccountDraft, Provider, ServiceRecord } from './types';
+import type { IdentityDraft, MembershipDraft } from './types';
+
+type SnapshotIdentity = Awaited<ReturnType<typeof repository.listIdentities>>[number];
+type SnapshotMembership = Awaited<ReturnType<typeof repository.listMemberships>>[number];
 
 type Snapshot = {
   ready: boolean;
-  providers: Provider[];
-  services: ServiceRecord[];
+  providers: Awaited<ReturnType<typeof repository.listProviders>>;
+  identities: SnapshotIdentity[];
+  memberships: SnapshotMembership[];
 };
 
-let snapshot: Snapshot = { ready: false, providers: [], services: [] };
+let snapshot: Snapshot = { ready: false, providers: [], identities: [], memberships: [] };
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -32,75 +31,57 @@ function getSnapshot() {
 }
 
 export async function hydrateAccounts() {
-  const [providers, services] = await Promise.all([
+  const [providers, identities, memberships] = await Promise.all([
     repository.listProviders(),
-    repository.listServices(),
+    repository.listIdentities(),
+    repository.listMemberships(),
   ]);
-  snapshot = { ready: true, providers, services };
+  snapshot = { ready: true, providers, identities, memberships };
   emit();
 }
 
-export function getAccountSnapshot() {
-  return snapshot;
-}
-
 export function useAccountData() {
-  const data = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return {
-    ...data,
-    accounts: allAccounts(data.providers),
-    identityProviders: identityProviders(data.providers),
-    serviceProviders: serviceProviders(data.providers),
-  };
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useAccountActions() {
-  const addAccount = useCallback(async (draft: AccountDraft) => {
-    const created = await repository.createAccount(draft);
+  const addIdentity = useCallback(async (draft: IdentityDraft) => {
+    const created = await repository.createIdentity(draft);
     await hydrateAccounts();
     return created;
   }, []);
 
-  const editAccount = useCallback(
-    async (id: number, patch: Pick<AccountDraft, 'identifier' | 'type' | 'purpose'>) => {
-      await repository.updateAccount(id, patch);
-      await hydrateAccounts();
-    },
-    []
-  );
-
-  const removeAccount = useCallback(async (id: number) => {
-    await repository.deleteAccount(id);
+  const removeIdentity = useCallback(async (id: number) => {
+    await repository.deleteIdentity(id);
     await hydrateAccounts();
   }, []);
 
-  const addServiceLink = useCallback(async (accountId: number, serviceName: string) => {
-    const service = await repository.ensureService(serviceName);
-    await repository.linkService(accountId, service.id);
+  const addMembership = useCallback(async (draft: MembershipDraft) => {
+    const created = await repository.createMembership(draft);
     await hydrateAccounts();
-    return service;
+    return created;
   }, []);
 
-  const removeServiceLink = useCallback(async (accountId: number, serviceId: number) => {
-    await repository.unlinkService(accountId, serviceId);
+  const removeMembership = useCallback(async (id: number) => {
+    await repository.deleteMembership(id);
     await hydrateAccounts();
   }, []);
 
-  return { addAccount, editAccount, removeAccount, addServiceLink, removeServiceLink };
+  return { addIdentity, removeIdentity, addMembership, removeMembership };
 }
 
-export function findAccount(id: number): Account | undefined {
-  return allAccounts(snapshot.providers).find((account) => account.id === id);
-}
-
-export { accountLabel } from './helpers';
-
-export function findProvider(id: number): Provider | undefined {
-  return snapshot.providers.find((provider) => provider.id === id);
+export function findIdentity(id: number): SnapshotIdentity | undefined {
+  return snapshot.identities.find((identity) => identity.id === id);
 }
 
 export function searchService(query: string) {
-  return lookupService(query, snapshot.providers);
+  return lookupService(query, snapshot.memberships, snapshot.identities);
 }
 
-export { ensureService, linkService } from './repository';
+export function membershipLabelById(id: number | null): string | null {
+  if (id == null) return null;
+  const membership = snapshot.memberships.find((item) => item.id === id);
+  return membership ? membershipLabel(membership) : null;
+}
+
+export { membershipLabel };

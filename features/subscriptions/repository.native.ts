@@ -1,25 +1,33 @@
 import { getDb } from '@/db/client';
-import { accounts, expenseCategories, providers, services, subscriptions } from '@/db/schema';
+import {
+  expenseCategories,
+  identities,
+  memberships,
+  providers,
+  subscriptions,
+} from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 import type { Subscription, SubscriptionDraft } from './types';
 
 async function hydrateLabels(rows: (typeof subscriptions.$inferSelect)[]): Promise<Subscription[]> {
   const db = getDb();
-  const [categoryRows, accountRows, providerRows, serviceRows] = await Promise.all([
+  const [categoryRows, membershipRows, identityRows, providerRows] = await Promise.all([
     db.select().from(expenseCategories),
-    db.select().from(accounts),
+    db.select().from(memberships),
+    db.select().from(identities),
     db.select().from(providers),
-    db.select().from(services),
   ]);
 
   return rows
     .map((row) => {
-      const account = accountRows.find((item) => item.id === row.accountId);
-      const provider = account
-        ? providerRows.find((item) => item.id === account.providerId)
+      const membership = membershipRows.find((item) => item.id === row.membershipId);
+      const service = membership
+        ? providerRows.find((item) => item.id === membership.providerId)
         : undefined;
-      const service = serviceRows.find((item) => item.id === row.serviceId);
+      const identity = membership
+        ? identityRows.find((item) => item.id === membership.identityId)
+        : undefined;
       return {
         id: row.id,
         name: row.name,
@@ -30,10 +38,9 @@ async function hydrateLabels(rows: (typeof subscriptions.$inferSelect)[]): Promi
         autopayMethod: row.autopayMethod,
         categoryId: row.categoryId,
         categoryName: categoryRows.find((item) => item.id === row.categoryId)?.name ?? 'Uncategorized',
-        accountId: row.accountId,
-        accountLabel: account ? `${provider?.name ?? 'Account'} · ${account.identifier}` : null,
-        serviceId: row.serviceId,
-        serviceName: service?.name ?? null,
+        membershipId: row.membershipId,
+        membershipLabel:
+          membership && service && identity ? `${service.name} · ${identity.identifier}` : null,
         inactiveAtMs: row.inactiveAt ? row.inactiveAt.getTime() : null,
       };
     })
@@ -57,8 +64,7 @@ export async function createSubscription(draft: SubscriptionDraft): Promise<Subs
       autopayEnabled: draft.autopayEnabled,
       autopayMethod: draft.autopayMethod,
       categoryId: draft.categoryId,
-      accountId: draft.accountId,
-      serviceId: draft.serviceId,
+      membershipId: draft.membershipId,
       createdAt: now,
       updatedAt: now,
     })
@@ -77,8 +83,7 @@ export async function updateSubscription(id: number, draft: SubscriptionDraft): 
       autopayEnabled: draft.autopayEnabled,
       autopayMethod: draft.autopayMethod,
       categoryId: draft.categoryId,
-      accountId: draft.accountId,
-      serviceId: draft.serviceId,
+      membershipId: draft.membershipId,
       updatedAt: new Date(),
     })
     .where(eq(subscriptions.id, id));

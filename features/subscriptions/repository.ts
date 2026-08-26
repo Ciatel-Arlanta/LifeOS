@@ -22,8 +22,7 @@ export async function createSubscription(draft: SubscriptionDraft): Promise<Subs
     id: data.nextId,
     ...draft,
     categoryName: '',
-    accountLabel: null,
-    serviceName: null,
+    membershipLabel: null,
     inactiveAtMs: null,
   };
   data.items.push(item);

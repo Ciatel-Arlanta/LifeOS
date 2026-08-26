@@ -7,23 +7,26 @@ import { Pressable } from '@/components/ui/pressable';
 import { SearchIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { lookupService } from '@/features/accounts/helpers';
+import { identityLabel, membershipLabel } from '@/features/accounts/helpers';
 import { useAccountData } from '@/features/accounts/store';
-import type { Account } from '@/features/accounts/types';
+import type { Identity, Membership } from '@/features/accounts/types';
+import { lookupService } from '@/features/accounts/helpers';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
-function AccountRows({ accounts }: { accounts: Account[] }) {
+function MembershipRows({ items }: { items: Membership[] }) {
   return (
     <Card className="px-4 py-0">
-      {accounts.map((account, index) => (
+      {items.map((membership, index) => (
         <Pressable
-          key={account.id}
-          onPress={() => router.push(`/account/${account.id}`)}
-          className={`py-3.5 ${index < accounts.length - 1 ? 'border-b border-border' : ''}`}>
-          <Text bold>{account.providerName}</Text>
+          key={membership.id}
+          onPress={() => router.push(`/account/${membership.identityId}`)}
+          accessibilityRole="button"
+          accessibilityLabel={membershipLabel(membership)}
+          className={`py-3.5 ${index < items.length - 1 ? 'border-b border-border' : ''}`}>
+          <Text bold>{membership.identityIdentifier}</Text>
           <Text size="xs" className="mt-1 font-mono text-muted-foreground">
-            {account.identifier}
+            {membership.note || `via ${membership.providerName} login`}
           </Text>
         </Pressable>
       ))}
@@ -31,10 +34,25 @@ function AccountRows({ accounts }: { accounts: Account[] }) {
   );
 }
 
+function IdentityRows({ items }: { items: Identity[] }) {
+  return (
+    <Card className="px-4 py-0">
+      {items.map((identity, index) => (
+        <Pressable
+          key={identity.id}
+          onPress={() => router.push(`/account/${identity.id}`)}
+          className={`py-3.5 ${index < items.length - 1 ? 'border-b border-border' : ''}`}>
+          <Text bold>{identityLabel(identity)}</Text>
+        </Pressable>
+      ))}
+    </Card>
+  );
+}
+
 export default function ServiceLookupScreen() {
-  const { providers } = useAccountData();
+  const { memberships, identities } = useAccountData();
   const [query, setQuery] = useState('');
-  const result = useMemo(() => lookupService(query, providers), [query, providers]);
+  const result = useMemo(() => lookupService(query, memberships, identities), [query, memberships, identities]);
 
   return (
     <Screen>
@@ -53,11 +71,14 @@ export default function ServiceLookupScreen() {
 
       {!query.trim() ? (
         <Text size="sm" className="mt-6 text-muted-foreground">
-          Search a linked service. Used / not used only includes sign-in identities.
+          Search a service to see which of your identities hold accounts there.
         </Text>
       ) : !result ? (
         <VStack className="mt-6">
-          <EmptyState title="No match" body="Link a service on an identity first, then search its name." />
+          <EmptyState
+            title="No match"
+            body="Add a service account on an identity first, then search its name."
+          />
         </VStack>
       ) : (
         <VStack space="lg" className="mt-6">
@@ -66,20 +87,20 @@ export default function ServiceLookupScreen() {
           </Heading>
 
           <VStack space="sm">
-            <Text bold>Used</Text>
+            <Text bold>Accounts here</Text>
             {result.used.length === 0 ? (
-              <EmptyState title="None yet" body="No sign-in identity is linked to this service." />
+              <EmptyState title="None yet" body="No identity holds an account at this service." />
             ) : (
-              <AccountRows accounts={result.used} />
+              <MembershipRows items={result.used} />
             )}
           </VStack>
 
           <VStack space="sm">
             <Text bold>Not used</Text>
             {result.notUsed.length === 0 ? (
-              <EmptyState title="None left" body="Every sign-in identity is already linked." />
+              <EmptyState title="None left" body="Every identity already has an account here." />
             ) : (
-              <AccountRows accounts={result.notUsed} />
+              <IdentityRows items={result.notUsed} />
             )}
           </VStack>
         </VStack>

@@ -1,4 +1,4 @@
-import type { Account, AccountType, Provider, ServiceLookupResult } from './types';
+import type { AccountType, Identity, Membership, ServiceLookupResult } from './types';
 
 export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   personal: 'Personal',
@@ -9,40 +9,30 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
 
 export const ACCOUNT_TYPES: AccountType[] = ['personal', 'college', 'work', 'other'];
 
-export function providerRoles(provider: Pick<Provider, 'isIdentity' | 'isService'>): string[] {
-  const roles: string[] = [];
-  if (provider.isIdentity) roles.push('Identity');
-  if (provider.isService) roles.push('Service');
-  return roles;
+export function identityLabel(identity: Identity): string {
+  return `${identity.providerName} · ${identity.identifier}`;
 }
 
-export function identityProviders(providers: Provider[]): Provider[] {
-  return providers.filter((provider) => provider.isIdentity);
+export function membershipLabel(membership: Membership): string {
+  return `${membership.providerName} · ${membership.identityIdentifier}`;
 }
 
-export function serviceProviders(providers: Provider[]): Provider[] {
-  return providers.filter((provider) => provider.isService);
+export function membershipsForIdentity(
+  memberships: Membership[],
+  identityId: number
+): Membership[] {
+  return memberships.filter((membership) => membership.identityId === identityId);
 }
 
-export function allAccounts(providers: Provider[]): Account[] {
-  return providers.flatMap((provider) => provider.accounts);
-}
-
-export function identityAccounts(providers: Provider[]): Account[] {
-  return identityProviders(providers).flatMap((provider) => provider.accounts);
-}
-
-export function lookupService(query: string, providers: Provider[]): ServiceLookupResult | null {
+export function lookupService(
+  query: string,
+  memberships: Membership[],
+  identities: Identity[]
+): ServiceLookupResult | null {
   const trimmed = query.trim();
   if (!trimmed) return null;
 
-  const serviceNames = [
-    ...new Set(
-      providers.flatMap((provider) =>
-        provider.accounts.flatMap((account) => account.services.map((service) => service.name))
-      )
-    ),
-  ];
+  const serviceNames = [...new Set(memberships.map((membership) => membership.providerName))];
 
   const serviceName =
     serviceNames.find((name) => name.toLowerCase() === trimmed.toLowerCase()) ??
@@ -50,15 +40,9 @@ export function lookupService(query: string, providers: Provider[]): ServiceLook
 
   if (!serviceName) return null;
 
-  const candidates = identityAccounts(providers);
-  const used = candidates.filter((account) =>
-    account.services.some((service) => service.name === serviceName)
-  );
-  const notUsed = candidates.filter((account) => !used.includes(account));
+  const used = memberships.filter((membership) => membership.providerName === serviceName);
+  const usedIdentityIds = new Set(used.map((membership) => membership.identityId));
+  const notUsed = identities.filter((identity) => !usedIdentityIds.has(identity.id));
 
   return { serviceName, used, notUsed };
-}
-
-export function accountLabel(account: Account): string {
-  return `${account.providerName} · ${account.identifier}`;
 }

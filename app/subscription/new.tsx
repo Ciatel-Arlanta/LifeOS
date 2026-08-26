@@ -13,7 +13,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { accountLabel } from '@/features/accounts/helpers';
+import { membershipLabel } from '@/features/accounts/helpers';
 import { useAccountData } from '@/features/accounts/store';
 import { useExpenseData } from '@/features/expenses/store';
 import { useSubscriptionActions } from '@/features/subscriptions/store';
@@ -25,7 +25,6 @@ import {
   type AutopayMethod,
   type BillingPeriod,
 } from '@/features/subscriptions/types';
-import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
 import { tapLight, tapSuccess } from '@/lib/haptics';
 import { isValidIsoDate } from '@/utils/date';
 import { parseRupeeInput } from '@/utils/money';
@@ -34,7 +33,7 @@ import { useEffect, useState } from 'react';
 
 export default function NewSubscriptionScreen() {
   const { categories } = useExpenseData();
-  const { accounts, services } = useAccountData();
+  const { memberships } = useAccountData();
   const { addSubscription } = useSubscriptionActions();
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');
@@ -43,8 +42,7 @@ export default function NewSubscriptionScreen() {
   const [autopay, setAutopay] = useState(true);
   const [method, setMethod] = useState<AutopayMethod>('gpay');
   const [categoryId, setCategoryId] = useState<number | null>(categories[0]?.id ?? null);
-  const [accountId, setAccountId] = useState<number | null>(null);
-  const [serviceId, setServiceId] = useState<number | null>(null);
+  const [membershipId, setMembershipId] = useState<number | null>(null);
   const [errors, setErrors] = useState<{ name?: string; cost?: string; renewal?: string }>({});
   const [saving, setSaving] = useState(false);
 
@@ -67,7 +65,6 @@ export default function NewSubscriptionScreen() {
     setErrors({});
     setSaving(true);
     try {
-      const linkedServiceId = await ensureSubscriptionAccountService(accountId, serviceId);
       await addSubscription({
         name,
         costMinor: parsed!,
@@ -76,8 +73,7 @@ export default function NewSubscriptionScreen() {
         autopayEnabled: autopay,
         autopayMethod: autopay ? method : null,
         categoryId,
-        accountId,
-        serviceId: linkedServiceId ?? null,
+        membershipId,
       });
       tapSuccess();
       router.back();
@@ -194,33 +190,19 @@ export default function NewSubscriptionScreen() {
 
         <VStack space="sm">
           <Text size="sm" bold>
-            Account
+            Linked login
+          </Text>
+          <Text size="sm" className="text-muted-foreground">
+            Which service account pays this. Optional — rent and gym can stay unlinked.
           </Text>
           <HStack space="sm" className="flex-wrap">
-            <Chip label="None" selected={accountId == null} onPress={() => setAccountId(null)} />
-            {accounts.map((account) => (
+            <Chip label="None" selected={membershipId == null} onPress={() => setMembershipId(null)} />
+            {memberships.map((membership) => (
               <Chip
-                key={account.id}
-                label={accountLabel(account)}
-                selected={accountId === account.id}
-                onPress={() => setAccountId(account.id)}
-              />
-            ))}
-          </HStack>
-        </VStack>
-
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Service
-          </Text>
-          <HStack space="sm" className="flex-wrap">
-            <Chip label="None" selected={serviceId == null} onPress={() => setServiceId(null)} />
-            {services.map((service) => (
-              <Chip
-                key={service.id}
-                label={service.name}
-                selected={serviceId === service.id}
-                onPress={() => setServiceId(service.id)}
+                key={membership.id}
+                label={membershipLabel(membership)}
+                selected={membershipId === membership.id}
+                onPress={() => setMembershipId(membership.id)}
               />
             ))}
           </HStack>

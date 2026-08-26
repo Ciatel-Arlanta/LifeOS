@@ -16,11 +16,10 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { accountLabel } from '@/features/accounts/helpers';
+import { membershipLabel } from '@/features/accounts/helpers';
 import { useAccountData } from '@/features/accounts/store';
 import { useSubscriptionActions, useSubscriptionData } from '@/features/subscriptions/store';
 import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/types';
-import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
 import { tapLight, tapWarning } from '@/lib/haptics';
 import { formatLongDate } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -29,7 +28,7 @@ import { useState } from 'react';
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { subscriptions } = useSubscriptionData();
-  const { accounts } = useAccountData();
+  const { memberships } = useAccountData();
   const { editSubscription, removeSubscription, setSubscriptionInactive } = useSubscriptionActions();
   const item = subscriptions.find((row) => row.id === Number(id));
   const [linking, setLinking] = useState(false);
@@ -57,9 +56,8 @@ export default function SubscriptionDetailScreen() {
     router.back();
   }
 
-  async function linkAccount(accountId: number | null) {
+  async function linkMembership(membershipId: number | null) {
     if (!item) return;
-    const serviceId = await ensureSubscriptionAccountService(accountId, item.serviceId, item.serviceName);
     await editSubscription(item.id, {
       name: item.name,
       costMinor: item.costMinor,
@@ -68,8 +66,7 @@ export default function SubscriptionDetailScreen() {
       autopayEnabled: item.autopayEnabled,
       autopayMethod: item.autopayMethod,
       categoryId: item.categoryId,
-      accountId,
-      serviceId: serviceId ?? item.serviceId,
+      membershipId,
     });
     setLinking(false);
   }
@@ -106,8 +103,7 @@ export default function SubscriptionDetailScreen() {
               }
             />
             <Detail label="Expense category" value={item.categoryName} />
-            <Detail label="Account" value={item.accountLabel ?? 'Not linked'} />
-            <Detail label="Service" value={item.serviceName ?? 'Not linked'} />
+            <Detail label="Linked login" value={item.membershipLabel ?? 'Not linked'} />
           </VStack>
         </Card>
 
@@ -124,23 +120,23 @@ export default function SubscriptionDetailScreen() {
         {linking ? (
           <VStack space="sm">
             <Text size="sm" bold>
-              Link account
+              Linked login
             </Text>
             <HStack space="sm" className="flex-wrap">
-              <Chip label="None" selected={item.accountId == null} onPress={() => linkAccount(null)} />
-              {accounts.map((account) => (
+              <Chip label="None" selected={item.membershipId == null} onPress={() => linkMembership(null)} />
+              {memberships.map((membership) => (
                 <Chip
-                  key={account.id}
-                  label={accountLabel(account)}
-                  selected={item.accountId === account.id}
-                  onPress={() => linkAccount(account.id)}
+                  key={membership.id}
+                  label={membershipLabel(membership)}
+                  selected={item.membershipId === membership.id}
+                  onPress={() => linkMembership(membership.id)}
                 />
               ))}
             </HStack>
           </VStack>
         ) : (
           <Button variant="outline" onPress={() => setLinking(true)}>
-            <ButtonText>{item.accountId ? 'Change account' : 'Link account'}</ButtonText>
+            <ButtonText>{item.membershipId ? 'Change linked login' : 'Link a login'}</ButtonText>
           </Button>
         )}
 

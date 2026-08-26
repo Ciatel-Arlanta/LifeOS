@@ -8,13 +8,10 @@ export const autopayMethods = ['gpay', 'card', 'other'] as const;
 export const providers = sqliteTable('providers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
-  sortOrder: integer('sort_order').notNull().default(0),
-  isIdentity: integer('is_identity', { mode: 'boolean' }).notNull().default(false),
-  isService: integer('is_service', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-export const accounts = sqliteTable('accounts', {
+export const identities = sqliteTable('identities', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   providerId: integer('provider_id')
     .notNull()
@@ -27,26 +24,19 @@ export const accounts = sqliteTable('accounts', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-export const services = sqliteTable('services', {
+export const memberships = sqliteTable('memberships', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
+  providerId: integer('provider_id')
+    .notNull()
+    .references(() => providers.id, { onDelete: 'cascade' }),
+  identityId: integer('identity_id')
+    .notNull()
+    .references(() => identities.id, { onDelete: 'cascade' }),
+  note: text('note'),
+  createdDate: text('created_date'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
-
-export const accountServices = sqliteTable(
-  'account_services',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    accountId: integer('account_id')
-      .notNull()
-      .references(() => accounts.id, { onDelete: 'cascade' }),
-    serviceId: integer('service_id')
-      .notNull()
-      .references(() => services.id, { onDelete: 'cascade' }),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-  },
-  (table) => [uniqueIndex('account_services_unique').on(table.accountId, table.serviceId)]
-);
 
 export const expenseCategories = sqliteTable('expense_categories', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -65,8 +55,9 @@ export const subscriptions = sqliteTable('subscriptions', {
   categoryId: integer('category_id').references(() => expenseCategories.id, {
     onDelete: 'set null',
   }),
-  accountId: integer('account_id').references(() => accounts.id, { onDelete: 'set null' }),
-  serviceId: integer('service_id').references(() => services.id, { onDelete: 'set null' }),
+  membershipId: integer('membership_id').references(() => memberships.id, {
+    onDelete: 'set null',
+  }),
   inactiveAt: integer('inactive_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),

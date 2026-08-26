@@ -13,10 +13,8 @@ export type Subscription = {
   autopayMethod: AutopayMethod | null;
   categoryId: number | null;
   categoryName: string;
-  accountId: number | null;
-  accountLabel: string | null;
-  serviceId: number | null;
-  serviceName: string | null;
+  membershipId: number | null;
+  membershipLabel: string | null;
   inactiveAtMs: number | null;
 };
 
@@ -28,8 +26,7 @@ export type SubscriptionDraft = {
   autopayEnabled: boolean;
   autopayMethod: AutopayMethod | null;
   categoryId: number | null;
-  accountId: number | null;
-  serviceId: number | null;
+  membershipId: number | null;
 };
 
 export const BILLING_PERIOD_LABEL: Record<BillingPeriod, string> = {

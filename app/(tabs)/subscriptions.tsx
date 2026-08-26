@@ -65,7 +65,7 @@ export default function SubscriptionsScreen() {
                       {item.autopayEnabled
                         ? ` · Autopay ${item.autopayMethod ? AUTOPAY_METHOD_LABEL[item.autopayMethod] : ''}`
                         : ' · Manual'}
-                      {item.accountLabel ? ` · ${item.accountLabel}` : ''}
+                      {item.membershipLabel ? ` · ${item.membershipLabel}` : ''}
                     </Text>
                     <Text size="sm" className="text-muted-foreground">
                       {formatRelativeDay(item.renewalDate, now)}

@@ -29,6 +29,20 @@
       "when": 1787669512633,
       "tag": "0003_tiny_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787748504896,
+      "tag": "0004_new_jamie_braddock",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787748536422,
+      "tag": "0005_noisy_boom_boom",
+      "breakpoints": true
     }
   ]
 }
