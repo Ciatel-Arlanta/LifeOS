@@ -58,13 +58,26 @@ adaptive = render_bento(1024, (0,0,0,0), (255,255,255,255), 676)
 adaptive.save(os.path.join(OUT, "adaptive-icon.png"), "PNG", optimize=True)
 print("adaptive-icon.png")
 
-# 3. splash.png: 2048 transparent, black bento centered at 1024 scale then centered on 2048
-# Render 1024 black on transparent, then paste centered on 2048
-bento_1024 = render_bento(1024, (0,0,0,0), (17,18,22,255), 676)
+# 3. splash.png: 2048 transparent, black bento + LifeOS wordmark (for app.json background #F4F4F6)
+# Bento 720px safe 475 centered upper, LifeOS text below
+from PIL import ImageFont
 splash = Image.new("RGBA", (2048, 2048), (0,0,0,0))
-splash.paste(bento_1024, (512, 512), bento_1024)
+draw = ImageDraw.Draw(splash)
+bento_splash = render_bento(720, (0,0,0,0), (17,18,22,255), 475)
+splash.paste(bento_splash, (1024-360, 580), bento_splash)
+font_path = os.path.join(BASE, "assets", "fonts", "Fraunces_600SemiBold.ttf")
+try:
+    font = ImageFont.truetype(font_path, 140)
+except:
+    font = ImageFont.load_default()
+text = "LifeOS"
+bbox = draw.textbbox((0,0), text, font=font)
+tw = bbox[2]-bbox[0]
+tx = 1024 - tw//2
+ty = 1420
+draw.text((tx, ty), text, fill=(17,18,22,255), font=font)
 splash.save(os.path.join(OUT, "splash.png"), "PNG", optimize=True)
-print("splash.png 2048")
+print("splash.png 2048 with LifeOS")
 
 # 4. favicon.png: 64 ink tile with white bento (for contrast on light browser tab)
 favicon = render_bento(64, (17,18,22,255), (255,255,255,255), 42)  # 66% of 64 ≈ 42
