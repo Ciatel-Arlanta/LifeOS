@@ -1,3 +1,4 @@
+import { BootLoading } from '@/components/boot';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Badge, BadgeText } from '@/components/ui/badge';
@@ -17,7 +18,11 @@ import { router } from 'expo-router';
 function ProviderBlock({ provider }: { provider: Provider }) {
   return (
     <VStack space="sm" className="mb-6">
-      <Pressable onPress={() => router.push(`/account/provider/${provider.id}`)}>
+      <Pressable
+        onPress={() => router.push(`/account/provider/${provider.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`${provider.name} details`}
+        hitSlop={8}>
         <HStack className="items-center justify-between">
           <Text bold>{provider.name}</Text>
           <HStack space="xs">
@@ -39,6 +44,8 @@ function ProviderBlock({ provider }: { provider: Provider }) {
             <Pressable
               key={account.id}
               onPress={() => router.push(`/account/${account.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={account.identifier}
               className={`py-3.5 ${index < provider.accounts.length - 1 ? 'border-b border-border' : ''}`}>
               <Text bold>{account.identifier}</Text>
               <Text size="xs" className="mt-1 font-mono text-muted-foreground">
@@ -56,13 +63,17 @@ function ProviderBlock({ provider }: { provider: Provider }) {
 }
 
 export default function AccountsScreen() {
-  const { identityProviders, serviceProviders, providers } = useAccountData();
+  const { identityProviders, serviceProviders, providers, ready } = useAccountData();
+
+  if (!ready) return <BootLoading />;
 
   return (
     <Box className="flex-1 bg-background">
       <Screen contentContainerClassName="px-5 pb-24 pt-2">
         <Pressable
           onPress={() => router.push('/account/lookup')}
+          accessibilityRole="button"
+          accessibilityLabel="Look up which account you used for a service"
           className="mb-8 rounded-xl bg-card px-4 py-4">
           <Text bold>Which account did I use?</Text>
           <Text size="sm" className="mt-1 text-muted-foreground">
@@ -101,7 +112,11 @@ export default function AccountsScreen() {
           </>
         )}
       </Screen>
-      <Fab size="md" placement="bottom right" onPress={() => router.push('/account/new')}>
+      <Fab
+        size="md"
+        placement="bottom right"
+        accessibilityLabel="Add account"
+        onPress={() => router.push('/account/new')}>
         <FabIcon as={AddIcon} />
         <FabLabel>Add</FabLabel>
       </Fab>

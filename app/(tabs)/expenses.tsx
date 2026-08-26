@@ -1,4 +1,5 @@
 import { Amount } from '@/components/amount';
+import { BootLoading } from '@/components/boot';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Box } from '@/components/ui/box';
@@ -25,8 +26,10 @@ function groupByDay(expenses: Expense[]) {
 }
 
 export default function ExpensesScreen() {
-  const { expenses } = useExpenseData();
+  const { expenses, ready } = useExpenseData();
   const groups = groupByDay(expenses);
+
+  if (!ready) return <BootLoading />;
 
   return (
     <Box className="flex-1 bg-background">
@@ -50,6 +53,8 @@ export default function ExpensesScreen() {
                     <Pressable
                       key={expense.id}
                       onPress={() => router.push(`/expense/${expense.id}`)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${expense.categoryName}, ${TRANSACTION_MODE_LABEL[expense.transactionMode]}`}
                       className={`flex-row items-center justify-between py-3.5 ${
                         index < group.items.length - 1 ? 'border-b border-border' : ''
                       }`}>
@@ -68,7 +73,11 @@ export default function ExpensesScreen() {
           })
         )}
       </Screen>
-      <Fab size="md" placement="bottom right" onPress={() => router.push('/expense/new')}>
+      <Fab
+        size="md"
+        placement="bottom right"
+        accessibilityLabel="Add expense"
+        onPress={() => router.push('/expense/new')}>
         <FabIcon as={AddIcon} />
         <FabLabel>Add</FabLabel>
       </Fab>

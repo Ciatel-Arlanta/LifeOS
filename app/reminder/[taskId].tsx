@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/empty-state';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,11 +19,7 @@ export default function ReminderTaskScreen() {
   const task = tasks.find((item) => item.id === Number(taskId));
 
   if (!task) {
-    return (
-      <Screen>
-        <Text bold>Task not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Task not found" />;
   }
 
   return (
@@ -68,7 +65,10 @@ export default function ReminderTaskScreen() {
                     onPress={() => {
                       tapWarning();
                       void removeReminder(reminder.id);
-                    }}>
+                    }}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove reminder at ${reminder.fireAtLabel}`}>
                     <Text size="sm" className="text-destructive">
                       Remove
                     </Text>

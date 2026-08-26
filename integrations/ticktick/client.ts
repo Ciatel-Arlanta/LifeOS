@@ -15,13 +15,24 @@ type ApiTask = {
 };
 
 async function request<T>(path: string, token: string): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new AppError('Could not reach TickTick. Check your connection.', 'ticktick.network');
+  }
   if (response.status === 401 || response.status === 403) {
-    throw new AppError('TickTick rejected the token.', 'ticktick.unauthorized');
+    throw new AppError(
+      'TickTick rejected this token. Paste a fresh one in Settings.',
+      'ticktick.unauthorized'
+    );
   }
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new AppError('TickTick is having trouble right now. Try again later.', 'ticktick.request_failed');
+    }
     throw new AppError(`TickTick request failed (${response.status}).`, 'ticktick.request_failed');
   }
   return (await response.json()) as T;

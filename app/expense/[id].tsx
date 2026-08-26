@@ -1,5 +1,7 @@
 import { Amount } from '@/components/amount';
 import { Chip } from '@/components/chip';
+import { DateInput } from '@/components/date-input';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
 import {
   AlertDialog,
@@ -18,9 +20,9 @@ import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
-import { tapLight, tapWarning } from '@/lib/haptics';
+import { tapLight, tapSuccess, tapWarning } from '@/lib/haptics';
 import { TRANSACTION_MODE_LABEL, TRANSACTION_MODES, type TransactionMode } from '@/features/expenses/types';
-import { formatLongDate } from '@/utils/date';
+import { formatLongDate, isValidIsoDate } from '@/utils/date';
 import { formatInr, parseRupeeInput } from '@/utils/money';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -37,13 +39,10 @@ export default function ExpenseDetailScreen() {
   const [mode, setMode] = useState<TransactionMode>('gpay');
   const [date, setDate] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   if (!expense) {
-    return (
-      <Screen>
-        <Text bold>Expense not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Expense not found" />;
   }
 
   function startEdit() {
@@ -57,19 +56,31 @@ export default function ExpenseDetailScreen() {
   }
 
   async function save() {
+    if (saving) return;
     const parsed = parseRupeeInput(amount);
     if (parsed == null || parsed <= 0) {
       setError('Enter an amount.');
+      tapLight();
       return;
     }
-    await editExpense(expense!.id, {
-      amountMinor: parsed,
-      categoryId,
-      transactionMode: mode,
-      occurredAt: date,
-    });
-    tapLight();
-    setEditing(false);
+    if (!isValidIsoDate(date)) {
+      setError('Pick a valid date.');
+      tapLight();
+      return;
+    }
+    setSaving(true);
+    try {
+      await editExpense(expense!.id, {
+        amountMinor: parsed,
+        categoryId,
+        transactionMode: mode,
+        occurredAt: date,
+      });
+      tapSuccess();
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function onDelete() {
@@ -83,11 +94,12 @@ export default function ExpenseDetailScreen() {
     <Screen>
       {editing ? (
         <VStack space="lg">
-          <Input className="h-16">
+          <Input className={error ? 'border-destructive' : ''}>
             <InputField
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
+              accessibilityLabel="Amount in rupees"
               className="font-display text-3xl"
             />
           </Input>
@@ -111,16 +123,14 @@ export default function ExpenseDetailScreen() {
               />
             ))}
           </HStack>
-          <Input>
-            <InputField value={date} onChangeText={setDate} className="font-mono" />
-          </Input>
+          <DateInput value={date} onChange={setDate} label="Expense date" />
           {error ? (
             <Text size="sm" className="text-destructive">
               {error}
             </Text>
           ) : null}
-          <Button onPress={save}>
-            <ButtonText>Save changes</ButtonText>
+          <Button onPress={() => void save()} isDisabled={saving}>
+            <ButtonText>{saving ? 'Saving…' : 'Save changes'}</ButtonText>
           </Button>
           <Button variant="outline" onPress={() => setEditing(false)}>
             <ButtonText>Cancel</ButtonText>

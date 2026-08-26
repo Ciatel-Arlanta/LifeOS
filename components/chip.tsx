@@ -13,7 +13,11 @@ export function Chip({
   return (
     <Pressable
       onPress={onPress}
-      className={`rounded-full border px-3.5 py-2 ${
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: Boolean(selected) }}
+      className={`rounded-full border px-4 py-2.5 ${
         selected ? 'border-primary bg-primary' : 'border-border bg-card'
       }`}>
       <Text size="sm" bold className={selected ? 'text-primary-foreground' : 'text-foreground'}>

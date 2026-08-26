@@ -1,6 +1,11 @@
 import { Screen } from '@/components/screen';
-import { Button, ButtonText } from '@/components/ui/button';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+} from '@/components/ui/form-control';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -51,31 +56,40 @@ export default function TickTickSettingsScreen() {
         </Card>
 
         {status === 'connected' ? (
-          <Button variant="outline" onPress={disconnect} isDisabled={busy}>
+          <Button variant="outline" onPress={() => void disconnect()} isDisabled={busy}>
+            {busy ? <ButtonSpinner /> : null}
             <ButtonText>Disconnect</ButtonText>
           </Button>
         ) : (
           <>
-            <Input>
-              <InputField
-                value={token}
-                onChangeText={setToken}
-                placeholder="Access token"
-                autoCapitalize="none"
-                secureTextEntry
-              />
-            </Input>
-            <Button onPress={connect} isDisabled={busy || !token.trim()}>
+            <FormControl isInvalid={Boolean(error)}>
+              <Input isInvalid={Boolean(error)}>
+                <InputField
+                  value={token}
+                  onChangeText={(value) => {
+                    setToken(value);
+                    setError(null);
+                  }}
+                  placeholder="Access token"
+                  autoCapitalize="none"
+                  secureTextEntry
+                  accessibilityLabel="TickTick access token"
+                />
+              </Input>
+              {error ? (
+                <FormControlError>
+                  <FormControlErrorText>{error}</FormControlErrorText>
+                </FormControlError>
+              ) : null}
+            </FormControl>
+            <Button onPress={() => void connect()} isDisabled={busy || !token.trim()}>
+              {busy ? <ButtonSpinner /> : null}
               <ButtonText>Connect TickTick</ButtonText>
             </Button>
           </>
         )}
 
-        {error ? (
-          <Text size="sm" className="text-destructive">
-            {error}
-          </Text>
-        ) : (
+        {error ? null : (
           <Text size="sm" className="text-muted-foreground">
             Create an app at developer.ticktick.com and use its OAuth access token. The token is stored
             on this device only.

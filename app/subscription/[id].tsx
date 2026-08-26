@@ -1,6 +1,15 @@
 import { Amount } from '@/components/amount';
 import { Chip } from '@/components/chip';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from '@/components/ui/alert-dialog';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -24,14 +33,28 @@ export default function SubscriptionDetailScreen() {
   const { editSubscription, removeSubscription, setSubscriptionInactive } = useSubscriptionActions();
   const item = subscriptions.find((row) => row.id === Number(id));
   const [linking, setLinking] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
   const paused = item?.inactiveAtMs != null;
 
   if (!item) {
-    return (
-      <Screen>
-        <Text bold>Subscription not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Subscription not found" />;
+  }
+
+  async function togglePause() {
+    if (!item || busy) return;
+    setBusy(true);
+    if (paused) tapLight();
+    else tapWarning();
+    await setSubscriptionInactive(item.id, !paused);
+    setBusy(false);
+  }
+
+  async function onDelete() {
+    if (!item) return;
+    await removeSubscription(item.id);
+    setConfirmDelete(false);
+    router.back();
   }
 
   async function linkAccount(accountId: number | null) {
@@ -94,13 +117,7 @@ export default function SubscriptionDetailScreen() {
             : 'When this renews, LifeOS adds a transaction automatically.'}
         </Text>
 
-        <Button
-          variant="outline"
-          onPress={() => {
-            if (paused) tapLight();
-            else tapWarning();
-            void setSubscriptionInactive(item.id, !paused);
-          }}>
+        <Button variant="outline" onPress={togglePause} isDisabled={busy}>
           <ButtonText>{paused ? 'Resume subscription' : 'Pause subscription'}</ButtonText>
         </Button>
 
@@ -129,14 +146,39 @@ export default function SubscriptionDetailScreen() {
 
         <Button
           variant="destructive"
-          onPress={async () => {
+          onPress={() => {
             tapWarning();
-            await removeSubscription(item.id);
-            router.back();
+            setConfirmDelete(true);
           }}>
           <ButtonText>Delete subscription</ButtonText>
         </Button>
       </VStack>
+
+      <AlertDialog isOpen={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading size="lg">Delete this subscription?</Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            <Text size="sm" className="text-muted-foreground">
+              Posted expenses stay in your history. This cannot be undone.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button variant="outline" onPress={() => setConfirmDelete(false)}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={() => {
+                void onDelete();
+              }}>
+              <ButtonText>Delete</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Screen>
   );
 }

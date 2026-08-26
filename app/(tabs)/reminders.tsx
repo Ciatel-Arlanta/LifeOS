@@ -1,6 +1,7 @@
+import { BootLoading } from '@/components/boot';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
-import { Button, ButtonText } from '@/components/ui/button';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
@@ -18,8 +19,9 @@ import { useEffect, useState } from 'react';
 
 export default function RemindersScreen() {
   const status = useUiStore((state) => state.ticktickStatus);
-  const { groups, error } = useReminderData();
+  const { groups, error, ready } = useReminderData();
   const [permission, setPermission] = useState<'granted' | 'denied' | 'undetermined' | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -31,6 +33,14 @@ export default function RemindersScreen() {
       active = false;
     };
   }, []);
+
+  if (!ready) return <BootLoading />;
+
+  const handleSync = () => {
+    if (syncing) return;
+    setSyncing(true);
+    void syncTickTickTasks().finally(() => setSyncing(false));
+  };
 
   const handlePermissionAction = async () => {
     const next =
@@ -70,8 +80,14 @@ export default function RemindersScreen() {
           </Text>
         ) : null}
         {status !== 'disconnected' ? (
-          <Button variant="outline" className="mt-4" onPress={() => void syncTickTickTasks()}>
-            <ButtonText>Refresh lists</ButtonText>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onPress={handleSync}
+            isDisabled={syncing}
+            accessibilityLabel="Refresh TickTick lists">
+            {syncing ? <ButtonSpinner /> : null}
+            <ButtonText>{syncing ? 'Refreshing…' : 'Refresh lists'}</ButtonText>
           </Button>
         ) : (
           <Button variant="outline" className="mt-4" onPress={() => router.push('/settings/ticktick')}>
@@ -94,6 +110,8 @@ export default function RemindersScreen() {
                 <Pressable
                   key={task.id}
                   onPress={() => router.push(`/reminder/${task.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${task.title}, ${task.reminders.length} reminder${task.reminders.length === 1 ? '' : 's'}`}
                   className={`py-3.5 ${index < group.tasks.length - 1 ? 'border-b border-border' : ''}`}>
                   <Text bold>{task.title}</Text>
                   <Text size="xs" className="mt-1 font-mono text-muted-foreground">

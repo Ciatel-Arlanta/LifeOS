@@ -1,4 +1,5 @@
 import { Amount } from '@/components/amount';
+import { BootLoading } from '@/components/boot';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Box } from '@/components/ui/box';
@@ -20,7 +21,10 @@ import { router } from 'expo-router';
 
 export default function SubscriptionsScreen() {
   const now = new Date();
-  const { subscriptions } = useSubscriptionData();
+  const { subscriptions, ready } = useSubscriptionData();
+
+  if (!ready) return <BootLoading />;
+
   const items = activeSubscriptions([...subscriptions]).sort((a, b) =>
     a.renewalDate.localeCompare(b.renewalDate)
   );
@@ -50,6 +54,8 @@ export default function SubscriptionsScreen() {
               <Pressable
                 key={item.id}
                 onPress={() => router.push(`/subscription/${item.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}, ${formatRelativeDay(item.renewalDate, now)}`}
                 className={`py-3.5 ${index < items.length - 1 ? 'border-b border-border' : ''}`}>
                 <Box className="flex-row items-start justify-between">
                   <VStack space="xs" className="flex-1 pr-3">
@@ -81,6 +87,8 @@ export default function SubscriptionsScreen() {
                 <Pressable
                   key={item.id}
                   onPress={() => router.push(`/subscription/${item.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}, paused`}
                   className={`py-3.5 ${index < paused.length - 1 ? 'border-b border-border' : ''}`}>
                   <Box className="flex-row items-center justify-between">
                     <Text className="flex-1 pr-3 text-muted-foreground">{item.name}</Text>
@@ -92,7 +100,11 @@ export default function SubscriptionsScreen() {
           </Box>
         ) : null}
       </Screen>
-      <Fab size="md" placement="bottom right" onPress={() => router.push('/subscription/new')}>
+      <Fab
+        size="md"
+        placement="bottom right"
+        accessibilityLabel="Add subscription"
+        onPress={() => router.push('/subscription/new')}>
         <FabIcon as={AddIcon} />
         <FabLabel>Add</FabLabel>
       </Fab>

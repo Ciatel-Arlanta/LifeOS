@@ -245,23 +245,22 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 - TickTick: paste Open API token in Settings, pull incomplete tasks grouped by list
 - LifeOS never completes TickTick tasks
 
-**Phase 6 — widgets (live)**
+**Phase 6 — widgets + polish (live)**
 
 - Android home-screen widgets: Spend (2×2→4×1), Renewals 4×2, Reminders 4×2, Glance 4×4; auto light/dark; `react-native-android-widget` 0.22.1 via config plugin; fonts bundled in `assets/fonts/`; `updatePeriodMillis` 30 min + `requestWidgetUpdate` on every hydrate; deep links via `lifeos://` (`OPEN_URI`); entry moved to `index.ts` so the headless handler is registered.
+- Polish (see `docs/polish-checklist.md`, all code items done): boot/loading gates on native + web (`BootLoading`/`BootError`, retry on DB/migration/hydrate failure), `ready` gates in all tabs, EmptyState everywhere incl. inline variants, NotFound screens with Go back for stale deep links, AlertDialog confirms for destructive deletes, per-field form validation (`FormControl isInvalid`), native date/time pickers on Android (`@react-native-community/datetimepicker`) with text fallback on web, double-submit guards, duplicate-category guard, account provider role rule, TickTick friendly error copy + invalid-token UI, haptics (`tapSuccess` on save, `tapWarning` on destructive), a11y roles/labels/hitSlops on rows/chips/Fabs/inputs.
+- Fixed during polish: `notifications/index.ts` unhandled rejection of `setNotificationCategoryAsync` on web crashed Expo's node SSR process.
 
 **Not implemented**
 
 - TickTick OAuth browser flow (token paste only)
 - Recurring LifeOS reminders
-- Phase 6 general polish (empty/loading/error tightening — widgets are the first slice)
 
 ---
 
 ## What to do next
 
-Default next step: **Phase 6 — polish**.
-
-Empty/loading/error states, form tightness, accessibility, verify notifications on a real Android device, verify TickTick token + failed-connection UI. Do not add product features.
+Phase 6 polish code is done. Remaining: **device-only verification** — notifications fire on a real Android device, widgets render/light-dark/refresh, TickTick token + invalid-token UI on device. Do not add product features.
 
 At the end of each phase report: what changed, files, schema, tests, limitations, next phase.
 

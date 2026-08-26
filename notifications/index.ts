@@ -2,7 +2,8 @@ import { PermissionStatus } from 'expo-modules-core';
 import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
-const REMINDER_CHANNEL_ID = 'lifeos-reminders-v2';
+const REMINDER_CHANNEL_ID = 'lifeos-reminders-v3';
+const REMINDER_CHANNEL_SOUND = 'lifeos_reminder.wav';
 const SNOOZE_CATEGORY_ID = 'reminder-snooze';
 
 try {
@@ -17,7 +18,9 @@ try {
   void Notifications.setNotificationCategoryAsync(SNOOZE_CATEGORY_ID, [
     { identifier: 'SNOOZE_1H', buttonTitle: 'Snooze 1h', options: { opensAppToForeground: false } },
     { identifier: 'SNOOZE_1D', buttonTitle: 'Snooze 1d', options: { opensAppToForeground: false } },
-  ]);
+  ]).catch(() => {
+    // Not available on web / unsupported Android versions.
+  });
 } catch {
   // Notifications are unavailable in some environments (web preview).
 }
@@ -58,7 +61,7 @@ async function ensureReminderChannel(): Promise<string | undefined> {
     await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
       name: 'Reminders',
       importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
+      sound: REMINDER_CHANNEL_SOUND,
       vibrationPattern: [0, 250, 250, 250],
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });

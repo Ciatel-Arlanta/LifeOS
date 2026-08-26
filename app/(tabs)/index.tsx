@@ -1,4 +1,6 @@
 import { Amount } from '@/components/amount';
+import { BootLoading } from '@/components/boot';
+import { EmptyState } from '@/components/empty-state';
 import { MonthTape } from '@/components/month-tape';
 import { Screen } from '@/components/screen';
 import { SectionHeader } from '@/components/section-header';
@@ -42,9 +44,14 @@ export default function HomeScreen() {
   const viewYear = viewed.getFullYear();
   const viewMonth = viewed.getMonth();
   const isCurrentMonth = monthOffset === 0;
-  const { expenses } = useExpenseData();
-  const { subscriptions } = useSubscriptionData();
-  const { openTasks } = useReminderData();
+  const { expenses, ready: expensesReady } = useExpenseData();
+  const { subscriptions, ready: subscriptionsReady } = useSubscriptionData();
+  const { openTasks, ready: remindersReady } = useReminderData();
+
+  if (!expensesReady || !subscriptionsReady || !remindersReady) {
+    return <BootLoading />;
+  }
+
   const total = monthTotal(expenses, viewYear, viewMonth);
   const shares = categoryBreakdown(expenses, viewYear, viewMonth);
   const renewals = upcomingSubscriptions(subscriptions, 3, now);
@@ -74,6 +81,7 @@ export default function HomeScreen() {
         </VStack>
         <Pressable
           onPress={() => router.push('/settings')}
+          accessibilityRole="button"
           accessibilityLabel="Settings"
           className="h-10 w-10 items-center justify-center rounded-full bg-card">
           <Icon as={SettingsIcon} className="text-foreground" size="md" />
@@ -83,6 +91,7 @@ export default function HomeScreen() {
       <HStack className="mb-2 items-center justify-between">
         <Pressable
           onPress={() => setMonthOffset((value) => value + 1)}
+          accessibilityRole="button"
           accessibilityLabel="Previous month"
           className="h-9 w-9 items-center justify-center rounded-full bg-card">
           <Icon as={ChevronLeft} className="text-foreground" size="sm" />
@@ -93,7 +102,9 @@ export default function HomeScreen() {
         <Pressable
           onPress={() => setMonthOffset((value) => Math.max(0, value - 1))}
           disabled={isCurrentMonth}
+          accessibilityRole="button"
           accessibilityLabel="Next month"
+          accessibilityState={{ disabled: isCurrentMonth }}
           className={`h-9 w-9 items-center justify-center rounded-full bg-card ${
             isCurrentMonth ? 'opacity-30' : ''
           }`}>
@@ -140,14 +151,17 @@ export default function HomeScreen() {
             <Amount minor={monthlyCommitmentMinor(subscriptions)} size="sm" />
           </HStack>
           {renewals.length === 0 ? (
-            <Text size="sm" className="py-3.5 text-muted-foreground">
-              No upcoming renewals
-            </Text>
+            <EmptyState
+              inline
+              title="No upcoming renewals"
+              body="Add a subscription to see it here."
+            />
           ) : null}
           {renewals.map((item, index) => (
             <Pressable
               key={item.id}
               onPress={() => router.push(`/subscription/${item.id}`)}
+              accessibilityRole="button"
               className={`flex-row items-center justify-between py-3.5 ${
                 index < renewals.length - 1 ? 'border-b border-border' : ''
               }`}>
@@ -171,14 +185,17 @@ export default function HomeScreen() {
         />
         <Card className="px-4 py-0">
           {reminders.length === 0 ? (
-            <Text size="sm" className="py-3.5 text-muted-foreground">
-              No LifeOS reminders yet
-            </Text>
+            <EmptyState
+              inline
+              title="No reminders yet"
+              body="Open a TickTick task and add one."
+            />
           ) : null}
           {reminders.map((item, index) => (
             <Pressable
               key={item.task.id}
               onPress={() => router.push(`/reminder/${item.task.id}`)}
+              accessibilityRole="button"
               className={`py-3.5 ${index < reminders.length - 1 ? 'border-b border-border' : ''}`}>
               <Text bold>{item.task.title}</Text>
               <Text size="xs" className="mt-1 font-mono text-muted-foreground">
@@ -192,15 +209,14 @@ export default function HomeScreen() {
       <Box className="mt-8">
         <SectionHeader title="Recent spend" actionLabel="All" onAction={() => router.push('/expenses')} />
         {recent.length === 0 ? (
-          <Text size="sm" className="text-muted-foreground">
-            Add an expense to see it here.
-          </Text>
+          <EmptyState title="No recent spend" body="Add an expense to see it here." />
         ) : (
           <Card className="px-4 py-0">
             {recent.map((expense, index) => (
               <Pressable
                 key={expense.id}
                 onPress={() => router.push(`/expense/${expense.id}`)}
+                accessibilityRole="button"
                 className={`flex-row items-center justify-between py-3.5 ${
                   index < recent.length - 1 ? 'border-b border-border' : ''
                 }`}>

@@ -1,6 +1,14 @@
 import { Chip } from '@/components/chip';
+import { DateInput } from '@/components/date-input';
 import { Screen } from '@/components/screen';
-import { Button, ButtonText } from '@/components/ui/button';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
 import { HStack } from '@/components/ui/hstack';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
@@ -18,7 +26,8 @@ import {
   type BillingPeriod,
 } from '@/features/subscriptions/types';
 import { ensureSubscriptionAccountService } from '@/services/subscription-posting';
-import { tapLight } from '@/lib/haptics';
+import { tapLight, tapSuccess } from '@/lib/haptics';
+import { isValidIsoDate } from '@/utils/date';
 import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -36,67 +45,83 @@ export default function NewSubscriptionScreen() {
   const [categoryId, setCategoryId] = useState<number | null>(categories[0]?.id ?? null);
   const [accountId, setAccountId] = useState<number | null>(null);
   const [serviceId, setServiceId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ name?: string; cost?: string; renewal?: string }>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (categoryId == null && categories[0]) setCategoryId(categories[0].id);
   }, [categories, categoryId]);
 
   async function save() {
+    if (saving) return;
+    const next: typeof errors = {};
+    if (!name.trim()) next.name = 'Add a name.';
     const parsed = parseRupeeInput(cost);
-    if (!name.trim()) {
-      setError('Add a name.');
+    if (parsed == null || parsed <= 0) next.cost = 'Enter a cost.';
+    if (!isValidIsoDate(renewal.trim())) next.renewal = 'Pick a valid renewal date.';
+    if (next.name || next.cost || next.renewal) {
+      setErrors(next);
+      tapLight();
       return;
     }
-    if (parsed == null || parsed <= 0) {
-      setError('Enter a cost.');
-      return;
+    setErrors({});
+    setSaving(true);
+    try {
+      const linkedServiceId = await ensureSubscriptionAccountService(accountId, serviceId);
+      await addSubscription({
+        name,
+        costMinor: parsed!,
+        billingPeriod: period,
+        renewalDate: renewal.trim(),
+        autopayEnabled: autopay,
+        autopayMethod: autopay ? method : null,
+        categoryId,
+        accountId,
+        serviceId: linkedServiceId ?? null,
+      });
+      tapSuccess();
+      router.back();
+    } finally {
+      setSaving(false);
     }
-    if (!renewal.trim()) {
-      setError('Add the next renewal date.');
-      return;
-    }
-    const linkedServiceId = await ensureSubscriptionAccountService(accountId, serviceId);
-    await addSubscription({
-      name,
-      costMinor: parsed,
-      billingPeriod: period,
-      renewalDate: renewal.trim(),
-      autopayEnabled: autopay,
-      autopayMethod: autopay ? method : null,
-      categoryId,
-      accountId,
-      serviceId: linkedServiceId ?? null,
-    });
-    tapLight();
-    router.back();
   }
 
   return (
     <Screen>
       <VStack space="lg">
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Name
-          </Text>
+        <FormControl isInvalid={Boolean(errors.name)}>
+          <FormControlLabel>
+            <FormControlLabelText>Name</FormControlLabelText>
+          </FormControlLabel>
           <Input>
             <InputField value={name} onChangeText={setName} placeholder="Claude Pro, rent, gym…" />
           </Input>
-        </VStack>
+          {errors.name ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.name}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
 
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Cost
-          </Text>
+        <FormControl isInvalid={Boolean(errors.cost)}>
+          <FormControlLabel>
+            <FormControlLabelText>Cost</FormControlLabelText>
+          </FormControlLabel>
           <Input>
             <InputField
               value={cost}
               onChangeText={setCost}
               keyboardType="decimal-pad"
               placeholder="0"
+              accessibilityLabel="Cost in rupees"
             />
           </Input>
-        </VStack>
+          {errors.cost ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.cost}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
 
         <VStack space="sm">
           <Text size="sm" bold>
@@ -114,19 +139,17 @@ export default function NewSubscriptionScreen() {
           </HStack>
         </VStack>
 
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Next renewal date
-          </Text>
-          <Input>
-            <InputField
-              value={renewal}
-              onChangeText={setRenewal}
-              placeholder="YYYY-MM-DD"
-              className="font-mono"
-            />
-          </Input>
-        </VStack>
+        <FormControl isInvalid={Boolean(errors.renewal)}>
+          <FormControlLabel>
+            <FormControlLabelText>Next renewal date</FormControlLabelText>
+          </FormControlLabel>
+          <DateInput value={renewal} onChange={setRenewal} label="Next renewal date" />
+          {errors.renewal ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.renewal}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
 
         <VStack space="sm">
           <Text size="sm" bold>
@@ -203,13 +226,8 @@ export default function NewSubscriptionScreen() {
           </HStack>
         </VStack>
 
-        {error ? (
-          <Text size="sm" className="text-destructive">
-            {error}
-          </Text>
-        ) : null}
-
-        <Button onPress={save}>
+        <Button onPress={() => void save()} isDisabled={saving}>
+          {saving ? <ButtonSpinner /> : null}
           <ButtonText>Save subscription</ButtonText>
         </Button>
       </VStack>

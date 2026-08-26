@@ -1,16 +1,27 @@
 import { Chip } from '@/components/chip';
+import { DateInput } from '@/components/date-input';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
-import { FormControl, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
+import {
+  Button,
+  ButtonSpinner,
+  ButtonText,
+} from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
 import { HStack } from '@/components/ui/hstack';
 import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
-import { tapLight } from '@/lib/haptics';
 import { TRANSACTION_MODE_LABEL, TRANSACTION_MODES, type TransactionMode } from '@/features/expenses/types';
+import { tapLight, tapSuccess } from '@/lib/haptics';
 import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,7 +38,9 @@ export default function NewExpenseScreen() {
   const [categoryId, setCategoryId] = useState<number | null>(categories[0]?.id ?? null);
   const [mode, setMode] = useState<TransactionMode>('gpay');
   const [date, setDate] = useState(todayIso);
-  const [error, setError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (categoryId == null && categories[0]) {
@@ -38,28 +51,38 @@ export default function NewExpenseScreen() {
   const parsed = useMemo(() => parseRupeeInput(amount), [amount]);
 
   async function save() {
+    if (saving) return;
+    setAmountError(null);
+    setCategoryError(null);
     if (parsed == null || parsed <= 0) {
-      setError('Enter an amount.');
+      setAmountError('Enter an amount.');
+      tapLight();
       return;
     }
     if (categories.length > 0 && categoryId == null) {
-      setError('Pick a category.');
+      setCategoryError('Pick a category.');
+      tapLight();
       return;
     }
-    await addExpense({
-      amountMinor: parsed,
-      categoryId,
-      transactionMode: mode,
-      occurredAt: date,
-    });
-    tapLight();
-    router.back();
+    setSaving(true);
+    try {
+      await addExpense({
+        amountMinor: parsed,
+        categoryId,
+        transactionMode: mode,
+        occurredAt: date,
+      });
+      tapSuccess();
+      router.back();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <Screen>
       <VStack space="lg">
-        <FormControl>
+        <FormControl isInvalid={Boolean(amountError)}>
           <FormControlLabel>
             <FormControlLabelText>Amount</FormControlLabelText>
           </FormControlLabel>
@@ -69,9 +92,15 @@ export default function NewExpenseScreen() {
               onChangeText={setAmount}
               keyboardType="decimal-pad"
               placeholder="0"
+              accessibilityLabel="Amount in rupees"
               className="font-display text-3xl"
             />
           </Input>
+          {amountError ? (
+            <FormControlError>
+              <FormControlErrorText>{amountError}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
         </FormControl>
 
         <Box>
@@ -84,16 +113,23 @@ export default function NewExpenseScreen() {
               body="Add one in Settings before you can categorize spend."
             />
           ) : (
-            <HStack space="sm" className="flex-wrap">
-              {categories.map((category) => (
-                <Chip
-                  key={category.id}
-                  label={category.name}
-                  selected={categoryId === category.id}
-                  onPress={() => setCategoryId(category.id)}
-                />
-              ))}
-            </HStack>
+            <>
+              <HStack space="sm" className="flex-wrap">
+                {categories.map((category) => (
+                  <Chip
+                    key={category.id}
+                    label={category.name}
+                    selected={categoryId === category.id}
+                    onPress={() => setCategoryId(category.id)}
+                  />
+                ))}
+              </HStack>
+              {categoryError ? (
+                <Text size="sm" className="mt-2 text-destructive">
+                  {categoryError}
+                </Text>
+              ) : null}
+            </>
           )}
         </Box>
 
@@ -117,27 +153,11 @@ export default function NewExpenseScreen() {
           <FormControlLabel>
             <FormControlLabelText>Date</FormControlLabelText>
           </FormControlLabel>
-          <Input>
-            <InputField
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              autoCapitalize="none"
-              className="font-mono"
-            />
-          </Input>
-          <FormControlHelper>
-            <FormControlHelperText>Use YYYY-MM-DD</FormControlHelperText>
-          </FormControlHelper>
+          <DateInput value={date} onChange={setDate} label="Expense date" />
         </FormControl>
 
-        {error ? (
-          <Text size="sm" className="text-destructive">
-            {error}
-          </Text>
-        ) : null}
-
-        <Button onPress={save}>
+        <Button onPress={() => void save()} isDisabled={saving}>
+          {saving ? <ButtonSpinner /> : null}
           <ButtonText>Save expense</ButtonText>
         </Button>
       </VStack>

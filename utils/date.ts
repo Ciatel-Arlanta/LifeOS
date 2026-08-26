@@ -87,6 +87,22 @@ export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+export function parseIsoDate(iso: string, fallback = new Date()): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return fallback;
+  const date = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? fallback : date;
+}
+
+export function isValidIsoDate(iso: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(new Date(`${iso}T00:00:00`).getTime());
+}
+
+export function isValidHm(hm: string): boolean {
+  if (!/^\d{2}:\d{2}$/.test(hm)) return false;
+  const [hours, minutes] = hm.split(':').map(Number);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
 export function todayIso(now = new Date()): string {
   return toIsoDate(now);
 }

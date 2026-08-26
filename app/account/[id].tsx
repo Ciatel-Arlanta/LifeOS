@@ -1,5 +1,14 @@
 import { EmptyState } from '@/components/empty-state';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
+import {
+  AlertDialog,
+  AlertDialogBackdrop,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+} from '@/components/ui/alert-dialog';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,13 +35,17 @@ export default function AccountDetailScreen() {
   const provider = account ? providers.find((item) => item.id === account.providerId) : undefined;
   const bills = subscriptions.filter((item) => item.accountId === account?.id);
   const [serviceName, setServiceName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!account) {
-    return (
-      <Screen>
-        <Text bold>Account not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Account not found" />;
+  }
+
+  async function onDelete() {
+    if (!account) return;
+    await removeAccount(account.id);
+    setConfirmDelete(false);
+    router.back();
   }
 
   async function link() {
@@ -95,7 +108,11 @@ export default function AccountDetailScreen() {
                 index < account.services.length - 1 ? 'border-b border-border' : ''
               }`}>
               <Text bold>{service.name}</Text>
-              <Pressable onPress={() => removeServiceLink(account.id, service.id)}>
+              <Pressable
+                onPress={() => removeServiceLink(account.id, service.id)}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={`Unlink ${service.name}`}>
                 <Text size="sm" className="text-destructive">
                   Unlink
                 </Text>
@@ -112,6 +129,7 @@ export default function AccountDetailScreen() {
             onChangeText={setServiceName}
             placeholder="Cursor, Vercel…"
             autoCapitalize="none"
+            accessibilityLabel="Service name to link"
             onSubmitEditing={link}
           />
         </Input>
@@ -144,13 +162,38 @@ export default function AccountDetailScreen() {
       <Button
         variant="destructive"
         className="mt-8"
-        onPress={async () => {
+        onPress={() => {
           tapWarning();
-          await removeAccount(account.id);
-          router.back();
+          setConfirmDelete(true);
         }}>
         <ButtonText>Delete account</ButtonText>
       </Button>
+
+      <AlertDialog isOpen={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading size="lg">Delete this account?</Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            <Text size="sm" className="text-muted-foreground">
+              Linked subscriptions keep working but lose their account. This cannot be undone.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button variant="outline" onPress={() => setConfirmDelete(false)}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              variant="destructive"
+              onPress={() => {
+                void onDelete();
+              }}>
+              <ButtonText>Delete</ButtonText>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Screen>
   );
 }

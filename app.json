@@ -7,7 +7,9 @@
     "icon": "./assets/images/icon.png",
     "scheme": "lifeos",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.lifeos.personal"
@@ -15,7 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#EDEEF2"
+        "backgroundColor": "#18181B"
       },
       "package": "app.lifeos.personal",
       "versionCode": 2,
@@ -36,14 +38,15 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "contain",
-          "backgroundColor": "#EDEEF2"
+          "backgroundColor": "#F4F4F5"
         }
       ],
       [
         "expo-notifications",
         {
           "color": "#18181B",
-          "defaultChannel": "lifeos-reminders-v2"
+          "defaultChannel": "lifeos-reminders-v3",
+          "sounds": ["./assets/sounds/lifeos_reminder.wav"]
         }
       ],
       "expo-status-bar",
@@ -101,12 +104,11 @@
             }
           ]
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
     }
   }
 }
-
-

@@ -1,13 +1,21 @@
 import { Chip } from '@/components/chip';
+import { DateInput, TimeInput } from '@/components/date-input';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
-import { Button, ButtonText } from '@/components/ui/button';
-import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useReminderActions, useReminderData } from '@/features/reminders/store';
-import { tapLight } from '@/lib/haptics';
-import { toIsoDate, todayIso } from '@/utils/date';
+import { tapLight, tapSuccess } from '@/lib/haptics';
+import { isValidHm, isValidIsoDate, toIsoDate, todayIso } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
@@ -23,14 +31,11 @@ export default function NewReminderScreen() {
   const task = tasks.find((item) => item.id === Number(taskId));
   const [date, setDate] = useState(todayIso());
   const [time, setTime] = useState('09:00');
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ date?: string; time?: string }>({});
+  const [saving, setSaving] = useState(false);
 
   if (!task) {
-    return (
-      <Screen>
-        <Text bold>Task not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Task not found" />;
   }
 
   function applyPreset(minutes: number) {
@@ -50,14 +55,30 @@ export default function NewReminderScreen() {
   }
 
   async function save() {
-    const fireAt = new Date(`${date}T${time}:00`);
-    if (Number.isNaN(fireAt.getTime())) {
-      setError('Use YYYY-MM-DD and HH:MM.');
+    if (saving) return;
+    const next: typeof errors = {};
+    if (!isValidIsoDate(date)) next.date = 'Pick a valid date.';
+    if (!isValidHm(time)) next.time = 'Pick a valid time.';
+    if (next.date || next.time) {
+      setErrors(next);
+      tapLight();
       return;
     }
-    await addReminder(task!.id, fireAt);
-    tapLight();
-    router.back();
+    const fireAt = new Date(`${date}T${time}:00`);
+    if (fireAt.getTime() <= Date.now()) {
+      setErrors({ date: 'Reminders must be set in the future.' });
+      tapLight();
+      return;
+    }
+    setErrors({});
+    setSaving(true);
+    try {
+      await addReminder(task!.id, fireAt);
+      tapSuccess();
+      router.back();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -78,28 +99,30 @@ export default function NewReminderScreen() {
             ))}
           </HStack>
         ) : null}
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Date
-          </Text>
-          <Input>
-            <InputField value={date} onChangeText={setDate} className="font-mono" placeholder="YYYY-MM-DD" />
-          </Input>
-        </VStack>
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Time
-          </Text>
-          <Input>
-            <InputField value={time} onChangeText={setTime} className="font-mono" placeholder="HH:MM" />
-          </Input>
-        </VStack>
-        {error ? (
-          <Text size="sm" className="text-destructive">
-            {error}
-          </Text>
-        ) : null}
-        <Button onPress={save}>
+        <FormControl isInvalid={Boolean(errors.date)}>
+          <FormControlLabel>
+            <FormControlLabelText>Date</FormControlLabelText>
+          </FormControlLabel>
+          <DateInput value={date} onChange={setDate} label="Reminder date" isInvalid={Boolean(errors.date)} />
+          {errors.date ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.date}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
+        <FormControl isInvalid={Boolean(errors.time)}>
+          <FormControlLabel>
+            <FormControlLabelText>Time</FormControlLabelText>
+          </FormControlLabel>
+          <TimeInput value={time} onChange={setTime} label="Reminder time" isInvalid={Boolean(errors.time)} />
+          {errors.time ? (
+            <FormControlError>
+              <FormControlErrorText>{errors.time}</FormControlErrorText>
+            </FormControlError>
+          ) : null}
+        </FormControl>
+        <Button onPress={() => void save()} isDisabled={saving}>
+          {saving ? <ButtonSpinner /> : null}
           <ButtonText>Save reminder</ButtonText>
         </Button>
       </VStack>

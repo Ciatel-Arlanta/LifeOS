@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/empty-state';
+import { NotFound } from '@/components/not-found';
 import { Screen } from '@/components/screen';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -16,11 +17,7 @@ export default function ProviderDetailScreen() {
   const provider = providers.find((item) => item.id === Number(id));
 
   if (!provider) {
-    return (
-      <Screen>
-        <Text bold>Provider not found</Text>
-      </Screen>
-    );
+    return <NotFound title="Provider not found" />;
   }
 
   return (

@@ -8,7 +8,7 @@ import { VStack } from '@/components/ui/vstack';
 import { ACCOUNT_TYPE_LABEL, ACCOUNT_TYPES } from '@/features/accounts/helpers';
 import { useAccountActions, useAccountData } from '@/features/accounts/store';
 import type { AccountType } from '@/features/accounts/types';
-import { tapLight } from '@/lib/haptics';
+import { tapLight, tapSuccess } from '@/lib/haptics';
 import { todayIso } from '@/utils/date';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -24,8 +24,10 @@ export default function NewAccountScreen() {
   const [type, setType] = useState<AccountType>('personal');
   const [purpose, setPurpose] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function save() {
+    if (saving) return;
     if (!providerId && !providerName.trim()) {
       setError('Pick or name a provider.');
       return;
@@ -34,18 +36,28 @@ export default function NewAccountScreen() {
       setError('Add an email or label.');
       return;
     }
-    const created = await addAccount({
-      providerId,
-      providerName,
-      isIdentity,
-      isService,
-      identifier,
-      type,
-      purpose,
-      createdDate: todayIso(),
-    });
-    tapLight();
-    router.replace(`/account/${created.id}`);
+    if (!isIdentity && !isService) {
+      setError('Pick at least one role for this provider.');
+      tapLight();
+      return;
+    }
+    setSaving(true);
+    try {
+      const created = await addAccount({
+        providerId,
+        providerName,
+        isIdentity,
+        isService,
+        identifier,
+        type,
+        purpose,
+        createdDate: todayIso(),
+      });
+      tapSuccess();
+      router.replace(`/account/${created.id}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -78,6 +90,7 @@ export default function NewAccountScreen() {
                 setProviderId(null);
               }}
               placeholder="Google, Microsoft, GitHub…"
+              accessibilityLabel="Provider name"
             />
           </Input>
         </VStack>
@@ -105,6 +118,7 @@ export default function NewAccountScreen() {
               onChangeText={setIdentifier}
               placeholder="personal@gmail.com"
               autoCapitalize="none"
+              accessibilityLabel="Email or label"
             />
           </Input>
         </VStack>
@@ -140,8 +154,8 @@ export default function NewAccountScreen() {
           </Text>
         ) : null}
 
-        <Button onPress={save}>
-          <ButtonText>Save account</ButtonText>
+        <Button onPress={() => void save()} isDisabled={saving}>
+          <ButtonText>{saving ? 'Saving…' : 'Save account'}</ButtonText>
         </Button>
       </VStack>
     </Screen>
