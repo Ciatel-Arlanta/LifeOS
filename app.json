@@ -17,7 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#18181B"
+        "backgroundColor": "#111216"
       },
       "package": "app.lifeos.personal",
       "versionCode": 3,
@@ -38,13 +38,13 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "contain",
-          "backgroundColor": "#F4F4F5"
+          "backgroundColor": "#F4F4F6"
         }
       ],
       [
         "expo-notifications",
         {
-          "color": "#18181B",
+          "color": "#111216",
           "defaultChannel": "lifeos-reminders-v3",
           "sounds": ["./assets/sounds/lifeos_reminder.wav"]
         }
