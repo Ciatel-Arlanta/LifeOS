@@ -51,8 +51,13 @@ export default function CategoriesSettingsScreen() {
 
   async function onDelete() {
     if (pendingDeleteId == null) return;
-    await removeCategory(pendingDeleteId);
     setPendingDeleteId(null);
+    try {
+      await removeCategory(pendingDeleteId);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Could not remove that category.');
+      tapLight();
+    }
   }
 
   return (
@@ -69,7 +74,7 @@ export default function CategoriesSettingsScreen() {
               <HStack
                 key={category.id}
                 className={`items-center justify-between py-3.5 ${
-                  index < categories.length - 1 ? 'border-b border-border' : ''
+                  index < categories.length - 1 ? 'border-border border-b' : ''
                 }`}>
                 <Text bold>{category.name}</Text>
                 <Pressable
@@ -117,9 +122,7 @@ export default function CategoriesSettingsScreen() {
         </VStack>
       </VStack>
 
-      <AlertDialog
-        isOpen={pendingDeleteId != null}
-        onClose={() => setPendingDeleteId(null)}>
+      <AlertDialog isOpen={pendingDeleteId != null} onClose={() => setPendingDeleteId(null)}>
         <AlertDialogBackdrop />
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -127,7 +130,8 @@ export default function CategoriesSettingsScreen() {
           </AlertDialogHeader>
           <AlertDialogBody>
             <Text size="sm" className="text-muted-foreground">
-              Expenses in this category become Uncategorized. This cannot be undone.
+              Expenses in this category become Uncategorized. A category still used by a
+              subscription cannot be removed. This cannot be undone.
             </Text>
           </AlertDialogBody>
           <AlertDialogFooter>

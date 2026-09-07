@@ -11,7 +11,7 @@ export type Subscription = {
   renewalDate: string;
   autopayEnabled: boolean;
   autopayMethod: AutopayMethod | null;
-  categoryId: number | null;
+  categoryId: number;
   categoryName: string;
   membershipId: number | null;
   membershipLabel: string | null;
@@ -25,7 +25,7 @@ export type SubscriptionDraft = {
   renewalDate: string;
   autopayEnabled: boolean;
   autopayMethod: AutopayMethod | null;
-  categoryId: number | null;
+  categoryId: number;
   membershipId: number | null;
 };
 

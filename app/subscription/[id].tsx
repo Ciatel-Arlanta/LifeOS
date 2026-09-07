@@ -16,10 +16,12 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { useExpenseData } from '@/features/expenses/store';
 import { membershipLabel } from '@/features/accounts/helpers';
 import { useAccountData } from '@/features/accounts/store';
 import { useSubscriptionActions, useSubscriptionData } from '@/features/subscriptions/store';
 import { AUTOPAY_METHOD_LABEL, BILLING_PERIOD_LABEL } from '@/features/subscriptions/types';
+import type { SubscriptionDraft } from '@/features/subscriptions/types';
 import { tapLight, tapWarning } from '@/lib/haptics';
 import { formatLongDate } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -29,9 +31,12 @@ export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { subscriptions } = useSubscriptionData();
   const { memberships } = useAccountData();
-  const { editSubscription, removeSubscription, setSubscriptionInactive } = useSubscriptionActions();
+  const { categories } = useExpenseData();
+  const { editSubscription, removeSubscription, setSubscriptionInactive } =
+    useSubscriptionActions();
   const item = subscriptions.find((row) => row.id === Number(id));
   const [linking, setLinking] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const paused = item?.inactiveAtMs != null;
@@ -56,7 +61,7 @@ export default function SubscriptionDetailScreen() {
     router.back();
   }
 
-  async function linkMembership(membershipId: number | null) {
+  async function patch(fields: Partial<SubscriptionDraft>) {
     if (!item) return;
     await editSubscription(item.id, {
       name: item.name,
@@ -66,16 +71,26 @@ export default function SubscriptionDetailScreen() {
       autopayEnabled: item.autopayEnabled,
       autopayMethod: item.autopayMethod,
       categoryId: item.categoryId,
-      membershipId,
+      membershipId: item.membershipId,
+      ...fields,
     });
+  }
+
+  async function linkMembership(membershipId: number | null) {
+    await patch({ membershipId });
     setLinking(false);
+  }
+
+  async function pickCategory(categoryId: number) {
+    await patch({ categoryId });
+    setEditingCategory(false);
   }
 
   return (
     <Screen>
       <VStack space="lg">
         <VStack space="xs">
-          <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
+          <Text size="xs" className="text-muted-foreground font-mono tracking-widest uppercase">
             {BILLING_PERIOD_LABEL[item.billingPeriod]}
           </Text>
           <Heading size="3xl" className="font-display">
@@ -83,7 +98,7 @@ export default function SubscriptionDetailScreen() {
           </Heading>
           <Amount minor={item.costMinor} size="lg" />
           {paused ? (
-            <Text size="xs" className="font-mono uppercase tracking-widest text-muted-foreground">
+            <Text size="xs" className="text-muted-foreground font-mono tracking-widest uppercase">
               Paused · no expenses posted
             </Text>
           ) : null}
@@ -117,13 +132,39 @@ export default function SubscriptionDetailScreen() {
           <ButtonText>{paused ? 'Resume subscription' : 'Pause subscription'}</ButtonText>
         </Button>
 
+        {editingCategory ? (
+          <VStack space="sm">
+            <Text size="sm" bold>
+              Expense category
+            </Text>
+            <HStack space="sm" className="flex-wrap">
+              {categories.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={category.name}
+                  selected={item.categoryId === category.id}
+                  onPress={() => void pickCategory(category.id)}
+                />
+              ))}
+            </HStack>
+          </VStack>
+        ) : (
+          <Button variant="outline" onPress={() => setEditingCategory(true)}>
+            <ButtonText>Change expense category</ButtonText>
+          </Button>
+        )}
+
         {linking ? (
           <VStack space="sm">
             <Text size="sm" bold>
               Linked login
             </Text>
             <HStack space="sm" className="flex-wrap">
-              <Chip label="None" selected={item.membershipId == null} onPress={() => linkMembership(null)} />
+              <Chip
+                label="None"
+                selected={item.membershipId == null}
+                onPress={() => linkMembership(null)}
+              />
               {memberships.map((membership) => (
                 <Chip
                   key={membership.id}
@@ -182,7 +223,7 @@ export default function SubscriptionDetailScreen() {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <VStack space="xs">
-      <Text size="xs" className="font-mono text-muted-foreground">
+      <Text size="xs" className="text-muted-foreground font-mono">
         {label}
       </Text>
       <Text bold>{value}</Text>

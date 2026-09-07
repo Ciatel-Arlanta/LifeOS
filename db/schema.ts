@@ -52,9 +52,9 @@ export const subscriptions = sqliteTable('subscriptions', {
   renewalDate: text('renewal_date').notNull(),
   autopayEnabled: integer('autopay_enabled', { mode: 'boolean' }).notNull().default(false),
   autopayMethod: text('autopay_method', { enum: autopayMethods }),
-  categoryId: integer('category_id').references(() => expenseCategories.id, {
-    onDelete: 'set null',
-  }),
+  categoryId: integer('category_id')
+    .references(() => expenseCategories.id, { onDelete: 'cascade' })
+    .notNull(),
   membershipId: integer('membership_id').references(() => memberships.id, {
     onDelete: 'set null',
   }),

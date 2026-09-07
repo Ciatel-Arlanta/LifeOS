@@ -31,6 +31,31 @@ import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+type SubscriptionErrors = {
+  name?: string;
+  cost?: string;
+  renewal?: string;
+  category?: string;
+};
+
+function validateSubscriptionForm(
+  name: string,
+  cost: string,
+  renewal: string,
+  categoryId: number | null,
+  hasCategories: boolean
+): { errors: SubscriptionErrors; costMinor: number | null } {
+  const errors: SubscriptionErrors = {};
+  if (!name.trim()) errors.name = 'Add a name.';
+  const costMinor = parseRupeeInput(cost);
+  if (!costMinor || costMinor <= 0) errors.cost = 'Enter a cost.';
+  if (!isValidIsoDate(renewal.trim())) errors.renewal = 'Pick a valid renewal date.';
+  if (categoryId == null) {
+    errors.category = hasCategories ? 'Pick a category.' : 'Create a category in Settings first.';
+  }
+  return { errors, costMinor };
+}
+
 export default function NewSubscriptionScreen() {
   const { categories } = useExpenseData();
   const { memberships } = useAccountData();
@@ -43,7 +68,7 @@ export default function NewSubscriptionScreen() {
   const [method, setMethod] = useState<AutopayMethod>('gpay');
   const [categoryId, setCategoryId] = useState<number | null>(categories[0]?.id ?? null);
   const [membershipId, setMembershipId] = useState<number | null>(null);
-  const [errors, setErrors] = useState<{ name?: string; cost?: string; renewal?: string }>({});
+  const [errors, setErrors] = useState<SubscriptionErrors>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -52,12 +77,14 @@ export default function NewSubscriptionScreen() {
 
   async function save() {
     if (saving) return;
-    const next: typeof errors = {};
-    if (!name.trim()) next.name = 'Add a name.';
-    const parsed = parseRupeeInput(cost);
-    if (parsed == null || parsed <= 0) next.cost = 'Enter a cost.';
-    if (!isValidIsoDate(renewal.trim())) next.renewal = 'Pick a valid renewal date.';
-    if (next.name || next.cost || next.renewal) {
+    const { errors: next, costMinor } = validateSubscriptionForm(
+      name,
+      cost,
+      renewal,
+      categoryId,
+      categories.length > 0
+    );
+    if (Object.keys(next).length > 0) {
       setErrors(next);
       tapLight();
       return;
@@ -67,12 +94,12 @@ export default function NewSubscriptionScreen() {
     try {
       await addSubscription({
         name,
-        costMinor: parsed!,
+        costMinor: costMinor!,
         billingPeriod: period,
         renewalDate: renewal.trim(),
         autopayEnabled: autopay,
         autopayMethod: autopay ? method : null,
-        categoryId,
+        categoryId: categoryId!,
         membershipId,
       });
       tapSuccess();
@@ -169,24 +196,31 @@ export default function NewSubscriptionScreen() {
           ) : null}
         </VStack>
 
-        <VStack space="sm">
-          <Text size="sm" bold>
-            Expense category
-          </Text>
-          <Text size="sm" className="text-muted-foreground">
-            Used when a renewal posts a transaction.
-          </Text>
-          <HStack space="sm" className="flex-wrap">
-            {categories.map((category) => (
-              <Chip
-                key={category.id}
-                label={category.name}
-                selected={categoryId === category.id}
-                onPress={() => setCategoryId(category.id)}
-              />
-            ))}
-          </HStack>
-        </VStack>
+        <FormControl isInvalid={Boolean(errors.category)}>
+          <VStack space="sm">
+            <FormControlLabel>
+              <FormControlLabelText>Expense category</FormControlLabelText>
+            </FormControlLabel>
+            <Text size="sm" className="text-muted-foreground">
+              Used when a renewal posts a transaction.
+            </Text>
+            <HStack space="sm" className="flex-wrap">
+              {categories.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={category.name}
+                  selected={categoryId === category.id}
+                  onPress={() => setCategoryId(category.id)}
+                />
+              ))}
+            </HStack>
+            {errors.category ? (
+              <FormControlError>
+                <FormControlErrorText>{errors.category}</FormControlErrorText>
+              </FormControlError>
+            ) : null}
+          </VStack>
+        </FormControl>
 
         <VStack space="sm">
           <Text size="sm" bold>
@@ -196,7 +230,11 @@ export default function NewSubscriptionScreen() {
             Which service account pays this. Optional — rent and gym can stay unlinked.
           </Text>
           <HStack space="sm" className="flex-wrap">
-            <Chip label="None" selected={membershipId == null} onPress={() => setMembershipId(null)} />
+            <Chip
+              label="None"
+              selected={membershipId == null}
+              onPress={() => setMembershipId(null)}
+            />
             {memberships.map((membership) => (
               <Chip
                 key={membership.id}

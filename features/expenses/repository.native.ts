@@ -1,13 +1,10 @@
 import { getDb } from '@/db/client';
-import { expenseCategories, expenses } from '@/db/schema';
+import { expenseCategories, expenses, subscriptions } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 
 import type { Expense, ExpenseCategory, ExpenseDraft } from './types';
 
-function mapExpense(
-  row: typeof expenses.$inferSelect,
-  categories: ExpenseCategory[]
-): Expense {
+function mapExpense(row: typeof expenses.$inferSelect, categories: ExpenseCategory[]): Expense {
   return {
     id: row.id,
     amountMinor: row.amountMinor,
@@ -26,7 +23,10 @@ export async function listCategories(): Promise<ExpenseCategory[]> {
 
 export async function listExpenses(): Promise<Expense[]> {
   const categories = await listCategories();
-  const rows = await getDb().select().from(expenses).orderBy(desc(expenses.occurredAt), desc(expenses.id));
+  const rows = await getDb()
+    .select()
+    .from(expenses)
+    .orderBy(desc(expenses.occurredAt), desc(expenses.id));
   return rows.map((row) => mapExpense(row, categories));
 }
 
@@ -40,6 +40,14 @@ export async function createCategory(name: string): Promise<ExpenseCategory> {
 }
 
 export async function deleteCategory(id: number): Promise<void> {
+  const [inUse] = await getDb()
+    .select({ id: subscriptions.id })
+    .from(subscriptions)
+    .where(eq(subscriptions.categoryId, id))
+    .limit(1);
+  if (inUse) {
+    throw new Error('A subscription uses this category. Move it to another one first.');
+  }
   await getDb().delete(expenseCategories).where(eq(expenseCategories.id, id));
 }
 
