@@ -36,12 +36,20 @@ bun run android    # primary target
 bun run dev        # Expo start
 bun run web        # browser preview only
 bun run typecheck
+bun run test       # bun test, pure helpers (tests/)
 bun run db:generate
 ```
 
 Android first. Same Expo codebase can target iOS later; do not add iOS-specific work unless asked. There is no device available for iOS testing.
 
 Web preview (`expo start --web`) is useful for layout. SQLite WASM is not wired on web; expense persistence on web uses `localStorage` via `features/expenses/repository.ts`. Native uses `features/expenses/repository.native.ts` + Drizzle.
+
+**Keep the two repositories in sync.** Every `features/<module>/repository.ts` (web,
+`localStorage`) must export exactly what its `repository.native.ts` (Drizzle) exports,
+with the same signatures. Metro picks one by platform, so nothing catches drift at
+runtime. `types/repository-parity.ts` asserts the pair matches and `bun run typecheck`
+fails if it does not — when you add or change a repository function, change both files
+in the same edit.
 
 ---
 
@@ -85,7 +93,7 @@ app/                      Expo Router screens
   settings/               categories (live), TickTick stub
 components/               app-level pieces (Screen, Amount, Chip, MonthTape, …)
 components/ui/            Gluestack components
-features/<module>/        types, mock or repository, store
+features/<module>/        types, helpers (pure, testable), mock or repository, store
 db/                       schema, client, DatabaseProvider
   provider.tsx            web: hydrate expenses from localStorage
   provider.native.tsx     Android: migrations then hydrate
@@ -115,16 +123,16 @@ Do not reopen these unless the user explicitly changes them.
 | Categories | Start empty. User adds them in **Settings**, not on the daily expense screen |
 | Recurring costs | Live in **Subscriptions** (Netflix, rent, gym — same entity) |
 | Subscription → expense | When a cycle is due, LifeOS **creates an expense**. Optional `subscription_id` on expenses. Advance `renewal_date` by the period. Catch up missed cycles. Autopay Other maps to Card |
-| Billing | Closed set: weekly / monthly / yearly + a `renewal_date` |
-| Subscription category | Required for auto-posting so the generated expense has a category |
+| Billing | Closed set: weekly / monthly / yearly + a `renewal_date`. Subscriptions can be paused/resumed (`inactive_at`). Paused items do not post auto-expenses and sit in a separate paused section. |
+| Subscription category | Required for auto-posting so the generated expense has a category. Enforced in the new + detail forms and in schema (`NOT NULL`, migration 0006). A category still used by a subscription cannot be removed. |
 | Account fields | **Identity**: provider (issuer), identifier, type (`personal` / `college` / `work` / `other`), purpose, created date. **Membership** (service account): service provider + signed-in identity, optional note/date. Multiple memberships per service allowed. **No status** |
 | Provider registry | Single `providers` table — any provider can issue identities or host service accounts. No `isIdentity`/`isService` flags |
 | Service lookup | Search a service → **Accounts here** (memberships at that service) vs **Not used** (identities with no membership there). No Recommended flag |
 | TickTick | Incomplete tasks only, grouped by TickTick lists. LifeOS never completes or edits the task |
-| Reminders | Multiple one-shot local datetimes per TickTick task. No recurrence in v1 |
+| Reminders | Multiple one-shot local datetimes per TickTick task. Quick presets (+1h / +1d before due). Interactive snooze (1h / 1d) from notification actions with custom sound `lifeos_reminder.wav` (`lifeos-reminders-v3` channel). No recurrence in v1 |
 | LifeOS login | None. Single-device local app |
 | Passwords | Never stored |
-| Chart | Dashboard month breakdown is in scope (screenshot-friendly). Not a reports suite |
+| Chart & Dashboard | Dashboard month breakdown tape with month-over-month delta and previous-month chevron browsing (`<` / `>`). Not a reports suite |
 
 ---
 
@@ -199,7 +207,9 @@ See `db/schema.ts`.
 - `identities` — issuer provider + identifier + type, no status
 - `memberships` — service provider + identity, optional note/date (multiple per service allowed)
 - `expense_categories`, `expenses` (`subscription_id` nullable)
-- `subscriptions` — optional `membership_id`, `category_id`
+- `subscriptions` — `category_id` (not null), optional `membership_id`, `inactive_at` (pause/resume)
+
+SQLite foreign keys are **off** (nothing issues `PRAGMA foreign_keys = ON`), so declared `onDelete` actions never fire. Referential rules that matter are enforced in the repository — see `deleteCategory` in `features/expenses/repository.native.ts`.
 - `ticktick_task_refs`, `reminder_configs`
 
 Money is integer paise. After schema changes: `bun run db:generate` and commit `drizzle/`.
@@ -237,12 +247,13 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 **Phase 3–5 — subscriptions, accounts, TickTick**
 
 - Accounts persist: add identity/service, link/unlink services, lookup Used/Not used
-- Subscriptions persist: cost, period, renewal, autopay, category, **account + service**
-- Linking a subscription to an account+service also writes `account_services`
+- Subscriptions persist: cost, period, renewal, autopay, required category (`NOT NULL`), **account + service**
+- Subscriptions pause/resume: toggle pause (`inactive_at`), excluded from active commitments and auto-posting
+- Linking a subscription to an account+service writes `memberships`
 - Account detail lists subscriptions on that identity
-- **Account redesign (identities + memberships)**: providers merged (no role flags); many memberships per service, each anchored to a sign-in identity (e.g. `achintya@gmail.com → Claude #1`, `achintya2@gmail.com → Claude #2`); subscriptions link via optional `membership_id`; lookup now lists memberships vs identities without memberships (migration `0004`/`0005`).
+- **Account redesign (identities + memberships)**: providers merged (no role flags); many memberships per service, each anchored to a sign-in identity (e.g. `achintya@gmail.com → Claude #1`, `achintya2@gmail.com → Claude #2`); subscriptions link via optional `membership_id`; lookup lists memberships vs identities without memberships (migrations `0004`/`0005`).
 - Due subscription cycles post expenses and advance `renewal_date`
-- Reminders persist per TickTick task ref; add/delete; Expo Notifications on native
+- Reminders persist per TickTick task ref; quick presets (+1h / +1d); Expo Notifications on native with custom sound `lifeos_reminder.wav` and interactive snooze actions (1h / 1d)
 - TickTick: paste Open API token in Settings, pull incomplete tasks grouped by list
 - LifeOS never completes TickTick tasks
 
@@ -250,6 +261,11 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 
 - Android home-screen widgets: Spend (2×2→4×1), Renewals 4×2, Reminders 4×2, Glance 4×4; auto light/dark; `react-native-android-widget` 0.22.1 via config plugin; fonts bundled in `assets/fonts/`; `updatePeriodMillis` 30 min + `requestWidgetUpdate` on every hydrate; deep links via `lifeos://` (`OPEN_URI`); entry moved to `index.ts` so the headless handler is registered.
 - Polish (see `docs/polish-checklist.md`, all code items done): boot/loading gates on native + web (`BootLoading`/`BootError`, retry on DB/migration/hydrate failure), `ready` gates in all tabs, EmptyState everywhere incl. inline variants, NotFound screens with Go back for stale deep links, AlertDialog confirms for destructive deletes, per-field form validation (`FormControl isInvalid`), native date/time pickers on Android (`@react-native-community/datetimepicker`) with text fallback on web, double-submit guards, duplicate-category guard, account provider role rule, TickTick friendly error copy + invalid-token UI, haptics (`tapSuccess` on save, `tapWarning` on destructive), a11y roles/labels/hitSlops on rows/chips/Fabs/inputs.
+- Dependency alignment: `bunx expo install --fix` brought 11 packages onto Expo 56. `bunx expo-doctor` is now 21/22; the one failure is the Hermes V1 memory regression, which only an SDK 57 upgrade fixes.
+- `react-native-screens` is deliberately held at `4.27.0` via `overrides`/`resolutions`, **not** the SDK's `~4.26.0`. At `4.26.x`, `expo-router` pulls its own nested `4.27.0` and you end up with two copies of a native library. Duplicate beats one minor ahead, so it is listed in `expo.install.exclude` to keep `expo-doctor` honest. Do not "fix" it back.
+- TypeScript is `~6.0.3`. `baseUrl` is gone (deprecated in TS 6); `paths` resolves relative to `tsconfig.json`, and `types/bun.d.ts` pulls in Bun's types via `/// <reference types="bun" />` since that no longer resolves via `typeRoots` without `baseUrl`.
+- CI: `.github/workflows/ci.yml` runs `bun install --frozen-lockfile`, `bun run typecheck`, `bun run test` on push to `master` and on PRs.
+- Tests: `bun test` over `features/*/helpers.ts` and `utils/`, config in `bunfig.toml`, mocks in `tests/setup.ts`.
 - Fixed during polish: `notifications/index.ts` unhandled rejection of `setNotificationCategoryAsync` on web crashed Expo's node SSR process.
 
 **Not implemented**

@@ -32,13 +32,6 @@ Write-Host "Generating android/ with expo prebuild"
 bunx expo prebuild --platform android
 if ($LASTEXITCODE -ne 0) { throw "expo prebuild failed." }
 
-# expo prebuild rewrites these to `expo run:*`. Keep the documented start scripts.
-$pkgPath = Join-Path $root "package.json"
-$pkgJson = Get-Content $pkgPath -Raw
-$pkgJson = $pkgJson -replace '"android": "expo run:android"', '"android": "expo start --android"'
-$pkgJson = $pkgJson -replace '"ios": "expo run:ios"', '"ios": "expo start --ios"'
-Set-Content -Path $pkgPath -Value $pkgJson -NoNewline
-
 # Gesture-handler codegen object names exceed 260 chars if the package lives
 # under this repo path. Copy it to C:\g and junction it back so CMake
 # canonicalizes to the short path.
