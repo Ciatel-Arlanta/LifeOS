@@ -32,6 +32,17 @@ Write-Host "Generating android/ with expo prebuild"
 bunx expo prebuild --platform android
 if ($LASTEXITCODE -ne 0) { throw "expo prebuild failed." }
 
+# Restore setTheme in MainActivity.kt if prebuild overwrote it
+$mainActivity = Join-Path $root "android\app\src\main\java\app\lifeos\personal\MainActivity.kt"
+if (Test-Path $mainActivity) {
+  $maText = Get-Content $mainActivity -Raw
+  if ($maText -match '// setTheme\(R\.style\.AppTheme\);') {
+    $maText = $maText -replace '// setTheme\(R\.style\.AppTheme\);', 'setTheme(R.style.AppTheme);'
+    Set-Content -Path $mainActivity -Value $maText -NoNewline
+    Write-Host "Ensured setTheme(R.style.AppTheme) is active in MainActivity.kt"
+  }
+}
+
 # Gesture-handler codegen object names exceed 260 chars if the package lives
 # under this repo path. Copy it to C:\g and junction it back so CMake
 # canonicalizes to the short path.
