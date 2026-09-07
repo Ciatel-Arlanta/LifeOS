@@ -16,11 +16,17 @@ export { ErrorBoundary } from 'expo-router';
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  useAppFonts();
+  const [fontsLoaded, fontError] = useAppFonts();
 
   useEffect(() => {
-    void SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <GluestackUIProvider mode="light">
