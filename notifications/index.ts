@@ -30,6 +30,8 @@ export const SNOOZE_LEAD_MINUTES: Record<string, number> = {
   SNOOZE_1D: 60 * 24,
 };
 
+export type NotificationResponse = Notifications.NotificationResponse;
+
 export function addNotificationResponseListener(
   callback: (response: Notifications.NotificationResponse) => void
 ) {

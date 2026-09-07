@@ -1,36 +1,17 @@
-import { categoryBreakdown, monthTotal } from '@/features/expenses/store';
-import { monthlyCommitmentMinor, upcomingSubscriptions } from '@/features/subscriptions/store';
-import { upcomingReminders } from '@/features/reminders/store';
+import { categoryBreakdown, monthTotal } from '@/features/expenses/helpers';
+import { monthlyCommitmentMinor, upcomingSubscriptions } from '@/features/subscriptions/helpers';
+import { upcomingReminders } from '@/features/reminders/helpers';
 import { formatMonthLabel } from '@/utils/date';
 
-type ExpenseRepo = typeof import('@/features/expenses/repository');
-type SubRepo = typeof import('@/features/subscriptions/repository');
-type ReminderRepo = typeof import('@/features/reminders/repository');
+import { listExpenses } from '@/features/expenses/repository';
+import { listSubscriptions } from '@/features/subscriptions/repository';
+import { listTasks } from '@/features/reminders/repository';
 
-async function loadExpenses() {
+async function safely<T>(loader: () => Promise<T>, fallback: T): Promise<T> {
   try {
-    const repo: ExpenseRepo = await import('@/features/expenses/repository');
-    return await repo.listExpenses();
+    return await loader();
   } catch {
-    return [];
-  }
-}
-
-async function loadSubscriptions() {
-  try {
-    const repo: SubRepo = await import('@/features/subscriptions/repository');
-    return await repo.listSubscriptions();
-  } catch {
-    return [];
-  }
-}
-
-async function loadReminderTasks() {
-  try {
-    const repo: ReminderRepo = await import('@/features/reminders/repository');
-    return await repo.listTasks();
-  } catch {
-    return [];
+    return fallback;
   }
 }
 
@@ -55,9 +36,9 @@ export type WidgetData = {
 
 export async function loadWidgetData(now = new Date()): Promise<WidgetData> {
   const [expenses, subscriptions, tasks] = await Promise.all([
-    loadExpenses(),
-    loadSubscriptions(),
-    loadReminderTasks(),
+    safely(listExpenses, []),
+    safely(listSubscriptions, []),
+    safely(listTasks, []),
   ]);
 
   const year = now.getFullYear();

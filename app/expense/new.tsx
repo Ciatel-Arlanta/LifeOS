@@ -3,11 +3,7 @@ import { DateInput } from '@/components/date-input';
 import { EmptyState } from '@/components/empty-state';
 import { Screen } from '@/components/screen';
 import { Box } from '@/components/ui/box';
-import {
-  Button,
-  ButtonSpinner,
-  ButtonText,
-} from '@/components/ui/button';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import {
   FormControl,
   FormControlError,
@@ -20,16 +16,16 @@ import { Input, InputField } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useExpenseActions, useExpenseData } from '@/features/expenses/store';
-import { TRANSACTION_MODE_LABEL, TRANSACTION_MODES, type TransactionMode } from '@/features/expenses/types';
+import {
+  TRANSACTION_MODE_LABEL,
+  TRANSACTION_MODES,
+  type TransactionMode,
+} from '@/features/expenses/types';
 import { tapLight, tapSuccess } from '@/lib/haptics';
+import { todayIso } from '@/utils/date';
 import { parseRupeeInput } from '@/utils/money';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-
-function todayIso() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
 
 export default function NewExpenseScreen() {
   const { categories } = useExpenseData();
@@ -125,7 +121,7 @@ export default function NewExpenseScreen() {
                 ))}
               </HStack>
               {categoryError ? (
-                <Text size="sm" className="mt-2 text-destructive">
+                <Text size="sm" className="text-destructive mt-2">
                   {categoryError}
                 </Text>
               ) : null}

@@ -1,4 +1,5 @@
 import {
+  type NotificationResponse,
   SNOOZE_LEAD_MINUTES,
   addNotificationResponseListener,
   getLastNotificationResponse,
@@ -7,7 +8,7 @@ import {
 import { snoozeReminder } from '@/features/reminders/store';
 import { useEffect } from 'react';
 
-function extractReminderId(response: { notification: { request: { content: { data?: unknown } } } }) {
+function extractReminderId(response: NotificationResponse) {
   const data = response.notification.request.content.data;
   const raw = data && typeof data === 'object' ? (data as { reminderId?: unknown }).reminderId : null;
   const id = Number(raw);
@@ -18,7 +19,7 @@ export function SnoozeResponseHandler() {
   useEffect(() => {
     if (!supportsNotifications()) return;
 
-    async function handle(response: Parameters<Parameters<typeof addNotificationResponseListener>[0]>[0]) {
+    async function handle(response: NotificationResponse) {
       const minutes = SNOOZE_LEAD_MINUTES[response.actionIdentifier];
       if (!minutes) return;
       const reminderId = extractReminderId(response);

@@ -15,7 +15,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useReminderActions, useReminderData } from '@/features/reminders/store';
 import { tapLight, tapSuccess } from '@/lib/haptics';
-import { isValidHm, isValidIsoDate, toIsoDate, todayIso } from '@/utils/date';
+import { formatTime, isValidHm, isValidIsoDate, toIsoDate, todayIso } from '@/utils/date';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
@@ -26,32 +26,29 @@ const REMINDER_PRESETS = [
 
 export default function NewReminderScreen() {
   const { taskId } = useLocalSearchParams<{ taskId: string }>();
-  const { tasks } = useReminderData();
+  const id = Number(taskId);
+  const { openTasks } = useReminderData();
   const { addReminder } = useReminderActions();
-  const task = tasks.find((item) => item.id === Number(taskId));
-  const [date, setDate] = useState(todayIso());
+  const [date, setDate] = useState(todayIso);
   const [time, setTime] = useState('09:00');
   const [errors, setErrors] = useState<{ date?: string; time?: string }>({});
   const [saving, setSaving] = useState(false);
 
-  if (!task) {
-    return <NotFound title="Task not found" />;
-  }
+  const task = openTasks.find((t) => t.id === id);
+
+  if (!task) return <NotFound title="Task not found" />;
 
   function applyPreset(minutes: number) {
     if (!task?.dueAtMs) return;
     const fireAt = new Date(task.dueAtMs - minutes * 60_000);
     setDate(toIsoDate(fireAt));
-    setTime(
-      `${String(fireAt.getHours()).padStart(2, '0')}:${String(fireAt.getMinutes()).padStart(2, '0')}`
-    );
+    setTime(formatTime(fireAt));
   }
 
   function isPresetSelected(minutes: number) {
     if (!task?.dueAtMs) return false;
     const fireAt = new Date(task.dueAtMs - minutes * 60_000);
-    const hhmm = `${String(fireAt.getHours()).padStart(2, '0')}:${String(fireAt.getMinutes()).padStart(2, '0')}`;
-    return toIsoDate(fireAt) === date && hhmm === time;
+    return toIsoDate(fireAt) === date && formatTime(fireAt) === time;
   }
 
   async function save() {
@@ -103,7 +100,12 @@ export default function NewReminderScreen() {
           <FormControlLabel>
             <FormControlLabelText>Date</FormControlLabelText>
           </FormControlLabel>
-          <DateInput value={date} onChange={setDate} label="Reminder date" isInvalid={Boolean(errors.date)} />
+          <DateInput
+            value={date}
+            onChange={setDate}
+            label="Reminder date"
+            isInvalid={Boolean(errors.date)}
+          />
           {errors.date ? (
             <FormControlError>
               <FormControlErrorText>{errors.date}</FormControlErrorText>
@@ -114,7 +116,12 @@ export default function NewReminderScreen() {
           <FormControlLabel>
             <FormControlLabelText>Time</FormControlLabelText>
           </FormControlLabel>
-          <TimeInput value={time} onChange={setTime} label="Reminder time" isInvalid={Boolean(errors.time)} />
+          <TimeInput
+            value={time}
+            onChange={setTime}
+            label="Reminder time"
+            isInvalid={Boolean(errors.time)}
+          />
           {errors.time ? (
             <FormControlError>
               <FormControlErrorText>{errors.time}</FormControlErrorText>

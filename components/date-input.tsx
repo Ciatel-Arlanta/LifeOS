@@ -1,7 +1,7 @@
 import { Input, InputField } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
-import { parseIsoDate, toIsoDate } from '@/utils/date';
+import { formatTime, parseIsoDate, toIsoDate } from '@/utils/date';
 import { Platform } from 'react-native';
 
 const FIELD_CLASSES =
@@ -42,10 +42,7 @@ async function pickTime(value: string, onChange: (hm: string) => void) {
     mode: 'time',
     is24Hour: true,
     onChange: (_event, date) => {
-      if (date)
-        onChange(
-          `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-        );
+      if (date) onChange(formatTime(date));
     },
   });
 }

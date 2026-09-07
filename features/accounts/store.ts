@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { lookupService, membershipLabel } from './helpers';
+import { membershipLabel } from './helpers';
 import * as repository from './repository';
 import type { IdentityDraft, MembershipDraft } from './types';
 
@@ -68,20 +68,6 @@ export function useAccountActions() {
   }, []);
 
   return { addIdentity, removeIdentity, addMembership, removeMembership };
-}
-
-export function findIdentity(id: number): SnapshotIdentity | undefined {
-  return snapshot.identities.find((identity) => identity.id === id);
-}
-
-export function searchService(query: string) {
-  return lookupService(query, snapshot.memberships, snapshot.identities);
-}
-
-export function membershipLabelById(id: number | null): string | null {
-  if (id == null) return null;
-  const membership = snapshot.memberships.find((item) => item.id === id);
-  return membership ? membershipLabel(membership) : null;
 }
 
 export { membershipLabel };
