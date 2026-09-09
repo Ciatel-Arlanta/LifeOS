@@ -21,6 +21,7 @@ import {
   useExpenseData,
 } from '@/features/expenses/store';
 import { TRANSACTION_MODE_LABEL } from '@/features/expenses/types';
+import { tapLight } from '@/lib/haptics';
 import { upcomingReminders, useReminderData } from '@/features/reminders/store';
 import {
   monthlyCommitmentMinor,
@@ -132,7 +133,12 @@ export default function HomeScreen() {
         />
       )}
 
-      <Button className="mt-4" onPress={() => router.push('/expense/new')}>
+      <Button
+        className="mt-4"
+        onPress={() => {
+          tapLight();
+          router.push('/expense/new');
+        }}>
         <ButtonIcon as={Plus} />
         <ButtonText>Add expense</ButtonText>
       </Button>

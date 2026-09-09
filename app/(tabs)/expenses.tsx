@@ -13,7 +13,7 @@ import { useExpenseData } from '@/features/expenses/store';
 import { TRANSACTION_MODE_LABEL, type Expense } from '@/features/expenses/types';
 import { formatDayHeading } from '@/utils/date';
 import { router } from 'expo-router';
-import { AddIcon } from '@/components/ui/icon';
+import { Plus } from 'lucide-react-native';
 
 function groupByDay(expenses: Expense[]) {
   const groups: { date: string; items: Expense[] }[] = [];
@@ -78,7 +78,7 @@ export default function ExpensesScreen() {
         placement="bottom right"
         accessibilityLabel="Add expense"
         onPress={() => router.push('/expense/new')}>
-        <FabIcon as={AddIcon} />
+        <FabIcon as={Plus} />
         <FabLabel>Add</FabLabel>
       </Fab>
     </Box>

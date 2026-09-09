@@ -1,4 +1,6 @@
 import { getExpenseSnapshot } from '@/features/expenses/store';
+import { syncRenewalNotifications } from '@/notifications/renewals';
+import { useUiStore } from '@/store/ui';
 import { useCallback, useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
@@ -38,6 +40,10 @@ export async function hydrateSubscriptions() {
   const rows = await repository.listSubscriptions();
   snapshot = { ready: true, subscriptions: rows.map(decorate) };
   emit();
+  void syncRenewalNotifications(
+    snapshot.subscriptions,
+    useUiStore.getState().renewalLeadDays
+  ).catch(() => {});
   if (Platform.OS === 'android') {
     void import('@/widgets/refresh').then((m) => m.refreshAllWidgets()).catch(() => {});
   }
@@ -73,6 +79,7 @@ export function useSubscriptionActions() {
 }
 
 export {
+  renewalNoticeAt,
   activeSubscriptions,
   pausedSubscriptions,
   upcomingSubscriptions,

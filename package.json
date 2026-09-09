@@ -1,7 +1,7 @@
 {
   "name": "lifeos",
   "main": "index.ts",
-  "version": "0.4.1",
+  "version": "0.4.5",
   "private": true,
   "scripts": {
     "dev": "expo start",
@@ -30,6 +30,7 @@
     "drizzle-orm": "^0.44.7",
     "expo": "~56.0.21",
     "expo-constants": "~56.0.25",
+    "expo-file-system": "~56.0.11",
     "expo-font": "~56.0.7",
     "expo-haptics": "~56.0.3",
     "expo-linking": "~56.0.17",
@@ -80,5 +81,8 @@
   "resolutions": {
     "lightningcss": "1.30.1",
     "react-native-screens": "4.26.2"
+  },
+  "patchedDependencies": {
+    "expo-router@56.2.20": "patches/expo-router@56.2.20.patch"
   }
 }

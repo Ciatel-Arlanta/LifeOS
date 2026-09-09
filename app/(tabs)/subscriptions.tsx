@@ -5,7 +5,7 @@ import { Screen } from '@/components/screen';
 import { Box } from '@/components/ui/box';
 import { Card } from '@/components/ui/card';
 import { Fab, FabIcon, FabLabel } from '@/components/ui/fab';
-import { AddIcon } from '@/components/ui/icon';
+import { Plus } from 'lucide-react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -105,7 +105,7 @@ export default function SubscriptionsScreen() {
         placement="bottom right"
         accessibilityLabel="Add subscription"
         onPress={() => router.push('/subscription/new')}>
-        <FabIcon as={AddIcon} />
+        <FabIcon as={Plus} />
         <FabLabel>Add</FabLabel>
       </Fab>
     </Box>

@@ -15,7 +15,8 @@ export function GluestackUIProvider({
   style?: ViewProps['style'];
 }) {
   useEffect(() => {
-    Appearance.setColorScheme(mode as ColorSchemeName);
+    // `system` means "follow the device", which Appearance expresses as null.
+    Appearance.setColorScheme(mode === 'system' ? 'unspecified' : (mode as ColorSchemeName));
   }, [mode]);
 
   return (

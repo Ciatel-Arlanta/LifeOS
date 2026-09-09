@@ -19,6 +19,22 @@ export default function SettingsScreen() {
 
         <Card className="px-4 py-0">
           <Pressable
+            onPress={() => router.push('/settings/appearance')}
+            className="border-b border-border py-4">
+            <Text bold>Appearance</Text>
+            <Text size="sm" className="mt-1 text-muted-foreground">
+              Light, dark, or follow the phone
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/settings/notifications')}
+            className="border-b border-border py-4">
+            <Text bold>Notifications</Text>
+            <Text size="sm" className="mt-1 text-muted-foreground">
+              Heads-up before a subscription renews
+            </Text>
+          </Pressable>
+          <Pressable
             onPress={() => router.push('/settings/categories')}
             className="border-b border-border py-4">
             <Text bold>Expense categories</Text>
@@ -34,10 +50,18 @@ export default function SettingsScreen() {
               Connection lives here
             </Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/account/lookup')} className="py-4">
+          <Pressable
+            onPress={() => router.push('/account/lookup')}
+            className="border-b border-border py-4">
             <Text bold>Look up a service</Text>
             <Text size="sm" className="mt-1 text-muted-foreground">
               Which sign-in identity did I use?
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/settings/data')} className="py-4">
+            <Text bold>Backup</Text>
+            <Text size="sm" className="mt-1 text-muted-foreground">
+              Export a copy, or restore one
             </Text>
           </Pressable>
         </Card>

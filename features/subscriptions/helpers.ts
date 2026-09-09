@@ -28,3 +28,20 @@ export function monthlyCommitmentMinor(items: Subscription[]): number {
     return sum;
   }, 0);
 }
+
+/**
+ * When to warn about a renewal: `leadDays` before `renewalDate`, at 09:00 local.
+ * Returns null when the notice window has already passed, or when notices are off.
+ */
+export function renewalNoticeAt(
+  renewalDate: string,
+  leadDays: number,
+  now = new Date()
+): Date | null {
+  if (leadDays <= 0) return null;
+  const at = new Date(`${renewalDate}T00:00:00`);
+  if (Number.isNaN(at.getTime())) return null;
+  at.setDate(at.getDate() - leadDays);
+  at.setHours(9, 0, 0, 0);
+  return at.getTime() > now.getTime() ? at : null;
+}
