@@ -2,11 +2,11 @@
   "expo": {
     "name": "LifeOS",
     "slug": "lifeos",
-    "version": "0.4.1",
+    "version": "0.4.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lifeos",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,7 +20,7 @@
         "backgroundColor": "#111216"
       },
       "package": "app.lifeos.personal",
-      "versionCode": 6,
+      "versionCode": 10,
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
@@ -44,6 +44,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
           "color": "#111216",
           "defaultChannel": "lifeos-reminders-v3",
           "sounds": ["./assets/sounds/lifeos_reminder.wav"]
@@ -109,6 +110,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "local"
+      }
     }
   }
 }

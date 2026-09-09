@@ -1,26 +1,32 @@
-import { PALETTE } from '@/lib/theme';
+import { useThemePalette } from '@/lib/use-color-scheme';
 import { Tabs } from 'expo-router';
 import { Bell, House, IdCard, Repeat, Wallet } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const palette = useThemePalette();
+  const bottomPadding = Math.max(insets.bottom, 12);
+  const tabHeight = 54 + bottomPadding;
+
   return (
     <Tabs
       screenOptions={{
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: PALETTE.paper },
-        headerTitleStyle: { fontFamily: 'Figtree_600SemiBold', fontSize: 17, color: PALETTE.ink },
-        headerTintColor: PALETTE.ink,
-        tabBarActiveTintColor: PALETTE.ink,
-        tabBarInactiveTintColor: PALETTE.mist,
+        headerStyle: { backgroundColor: palette.paper },
+        headerTitleStyle: { fontFamily: 'Figtree_600SemiBold', fontSize: 17, color: palette.ink },
+        headerTintColor: palette.ink,
+        tabBarActiveTintColor: palette.ink,
+        tabBarInactiveTintColor: palette.mist,
         tabBarLabelStyle: { fontFamily: 'Figtree_500Medium', fontSize: 11 },
         tabBarStyle: {
-          backgroundColor: PALETTE.card,
-          borderTopColor: PALETTE.line,
-          height: 64,
+          backgroundColor: palette.card,
+          borderTopColor: palette.line,
+          height: tabHeight,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: bottomPadding,
         },
-        sceneStyle: { backgroundColor: PALETTE.paper },
+        sceneStyle: { backgroundColor: palette.paper },
       }}>
       <Tabs.Screen
         name="index"

@@ -3,7 +3,9 @@ import '@/global.css';
 import { DatabaseProvider } from '@/db/provider';
 import { SnoozeResponseHandler } from '@/features/reminders/snooze-handler';
 import { useAppFonts } from '@/lib/fonts';
-import { NAV_THEME, PALETTE } from '@/lib/theme';
+import { useThemePalette, useResolvedColorScheme } from '@/lib/use-color-scheme';
+import { NAV_THEME } from '@/lib/theme';
+import { useUiStore } from '@/store/ui';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { Stack } from 'expo-router';
@@ -18,6 +20,9 @@ void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
+  const themeMode = useUiStore((state) => state.themeMode);
+  const scheme = useResolvedColorScheme();
+  const palette = useThemePalette();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -31,19 +36,19 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <GluestackUIProvider mode="light">
-        <ThemeProvider value={NAV_THEME.light}>
-          <StatusBar style="dark" />
+      <GluestackUIProvider mode={themeMode}>
+        <ThemeProvider value={NAV_THEME[scheme]}>
+          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <DatabaseProvider>
             <SnoozeResponseHandler />
             <Stack
               screenOptions={{
                 headerShadowVisible: false,
-                headerTintColor: PALETTE.ink,
-                headerStyle: { backgroundColor: PALETTE.paper },
+                headerTintColor: palette.ink,
+                headerStyle: { backgroundColor: palette.paper },
                 headerTitleStyle: { fontFamily: 'Figtree_600SemiBold', fontSize: 17 },
                 headerBackTitle: '',
-                contentStyle: { backgroundColor: PALETTE.paper },
+                contentStyle: { backgroundColor: palette.paper },
               }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="expense/new" options={{ title: 'Add expense' }} />
@@ -54,11 +59,13 @@ export default function RootLayout() {
               <Stack.Screen name="reminder/new" options={{ title: 'Add reminder' }} />
               <Stack.Screen name="account/new" options={{ title: 'Add account' }} />
               <Stack.Screen name="account/lookup" options={{ title: 'Look up a service' }} />
-              <Stack.Screen name="account/provider/[id]" options={{ title: 'Provider' }} />
               <Stack.Screen name="account/[id]" options={{ title: 'Account' }} />
               <Stack.Screen name="settings/index" options={{ title: 'Settings' }} />
               <Stack.Screen name="settings/categories" options={{ title: 'Categories' }} />
               <Stack.Screen name="settings/ticktick" options={{ title: 'TickTick' }} />
+              <Stack.Screen name="settings/appearance" options={{ title: 'Appearance' }} />
+              <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
+              <Stack.Screen name="settings/data" options={{ title: 'Backup' }} />
             </Stack>
           </DatabaseProvider>
         </ThemeProvider>

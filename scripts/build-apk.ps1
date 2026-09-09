@@ -59,10 +59,13 @@ if ((Test-Path $ghSrc) -and -not ((Get-Item $ghSrc).Attributes -band [IO.FileAtt
 # Keep Ninja object paths under Windows' 260-char limit.
 $appGradle = Join-Path $root "android\app\build.gradle"
 $gradleText = Get-Content $appGradle -Raw
+if ($gradleText -notmatch 'layout\.buildDirectory\.set') {
+  $gradleText = $gradleText -replace '(apply plugin: "com\.facebook\.react"\r?\n)', "`$1`nlayout.buildDirectory.set(file(`"C:/b/lifeos-app`"))`n"
+}
 if ($gradleText -notmatch 'buildStagingDirectory "C:/c"') {
   $gradleText = $gradleText -replace '(compileSdk rootProject\.ext\.compileSdkVersion\r?\n)', "`$1`n    externalNativeBuild { cmake { buildStagingDirectory `"C:/c`" } }`n"
-  Set-Content -Path $appGradle -Value $gradleText -NoNewline
 }
+Set-Content -Path $appGradle -Value $gradleText -NoNewline
 
 # Prefer an already-installed build-tools package. Expo 56 asks for 36.0.0,
 # which can fail to download as a corrupt zip.

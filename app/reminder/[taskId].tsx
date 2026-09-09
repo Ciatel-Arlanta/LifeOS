@@ -9,7 +9,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useReminderActions, useReminderData } from '@/features/reminders/store';
-import { tapWarning } from '@/lib/haptics';
+import { tapLight, tapWarning } from '@/lib/haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
 export default function ReminderTaskScreen() {
@@ -79,7 +79,11 @@ export default function ReminderTaskScreen() {
           )}
         </VStack>
 
-        <Button onPress={() => router.push(`/reminder/new?taskId=${task.id}`)}>
+        <Button
+          onPress={() => {
+            tapLight();
+            router.push(`/reminder/new?taskId=${task.id}`);
+          }}>
           <ButtonText>Add reminder</ButtonText>
         </Button>
       </VStack>

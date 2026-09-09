@@ -62,7 +62,7 @@ in the same edit.
 | UI kit | **Gluestack UI v5** (`@gluestack-ui/core`), copy-paste components in `components/ui/` |
 | Client state | Zustand — UI/session only |
 | Data | SQLite + Drizzle on Android; localStorage fallback on web |
-| Notifications | Expo Notifications (stub only so far) |
+| Notifications | Expo Notifications — reminders + subscription renewal notices |
 | Widgets | `react-native-android-widget` 0.22.1 — Android home-screen widgets |
 | Package manager | Bun |
 
@@ -98,8 +98,8 @@ db/                       schema, client, DatabaseProvider
   provider.tsx            web: hydrate expenses from localStorage
   provider.native.tsx     Android: migrations then hydrate
 drizzle/                  generated SQL migrations — commit these
-store/                    Zustand (TickTick connection status)
-notifications/            isolated; schedule/cancel not implemented
+store/                    Zustand (TickTick status, theme mode, renewal lead days)
+notifications/            isolated; reminder schedule/cancel + subscription renewal notices
 integrations/ticktick/    interface + stub
 services/                 later business ops (subscription auto-post stub)
 docs/mockups/             AI mockups + widget spec boards (widgets/*.png)
@@ -133,6 +133,9 @@ Do not reopen these unless the user explicitly changes them.
 | LifeOS login | None. Single-device local app |
 | Passwords | Never stored |
 | Chart & Dashboard | Dashboard month breakdown tape with month-over-month delta and previous-month chevron browsing (`<` / `>`). Not a reports suite |
+| Theme | System / Light / Dark, chosen in **Settings → Appearance**, persisted in `lifeos.theme-mode`. `system` follows the phone. Dark palette is the same charcoal ladder inverted — still no green |
+| Renewal notices | One local notification per active subscription, at 09:00, `n` days before `renewal_date`. Lead time is Off / 1 / 2 / 3 / 7 days in **Settings → Notifications**, default 2. Paused subscriptions never notify. The whole set is cancelled and rebuilt on every subscription hydrate, so no notification ids are stored |
+| Backup | JSON export/import of expenses, subscriptions, categories, providers, identities, memberships — **ids included**, so the links survive. Import **replaces everything** (confirm dialog first); there is no merge. CSV is expenses only and export-only. TickTick task refs and reminder schedules are not backed up |
 
 ---
 
@@ -223,6 +226,11 @@ Money is integer paise. After schema changes: `bun run db:generate` and commit `
 | Accounts / providers / services | SQLite | `lifeos.identity-data` |
 | Reminder configs + task refs | SQLite | `lifeos.reminder-data` |
 | TickTick token | SecureStore | `lifeos.ticktick-token` |
+| Preferences (theme, renewal lead) | `expo-sqlite/kv-store` | `localStorage` |
+
+Preferences go through `lib/preferences.ts` / `.native.ts`. Reads are **synchronous** on
+purpose — the theme is resolved before the first paint, and an async read would flash the
+wrong scheme.
 
 Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `features/accounts/store.ts`, `features/reminders/store.ts`. App boot: `features/app/hydrate.ts`.
 
@@ -268,6 +276,26 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 - Tests: `bun test` over `features/*/helpers.ts` and `utils/`, config in `bunfig.toml`, mocks in `tests/setup.ts`.
 - Fixed during polish: `notifications/index.ts` unhandled rejection of `setNotificationCategoryAsync` on web crashed Expo's node SSR process.
 
+**Phase 7 — settings + backup (live)**
+
+- **Theme**: System / Light / Dark in Settings → Appearance. `store/ui.ts` holds the mode,
+  `lib/use-color-scheme.ts` resolves `system` against the device, `lib/theme.ts` supplies the
+  matching chrome palette to the root Stack and the tab bar. The vendored
+  `GluestackUIProvider` now maps `system` to `Appearance.setColorScheme('unspecified')`
+  instead of passing the literal string through.
+- **Haptics**: moved onto the `Fab` primitive so every FAB taps without repeating the call;
+  added to the dashboard and reminder primary actions and to notification-action snoozes.
+- **Renewal notices**: `notifications/renewals.ts` on channel `lifeos-renewals-v1`.
+  `syncRenewalNotifications` cancels every notification tagged
+  `data.kind === 'subscription-renewal'` and reschedules from scratch on each
+  `hydrateSubscriptions`, so edits, pauses and deletes stay correct without a schema change.
+  It never prompts for permission — the Reminders tab owns asking, and an ungranted
+  permission just means nothing is scheduled.
+- **Backup**: Settings → Backup. Export writes through the Storage Access Framework so the
+  user picks a real folder; import uses `File.pickFileAsync` from expo-file-system 56. No new
+  native dependency was added — `expo-file-system` was already installed transitively and is
+  now declared in `package.json`.
+
 **Not implemented**
 
 - TickTick OAuth browser flow (token paste only)
@@ -277,7 +305,10 @@ Stores: `features/expenses/store.ts`, `features/subscriptions/store.ts`, `featur
 
 ## What to do next
 
-Phase 6 polish code is done. Remaining: **device-only verification** — notifications fire on a real Android device, widgets render/light-dark/refresh, TickTick token + invalid-token UI on device. Do not add product features.
+Phase 7 code is done. Remaining: **device-only verification** — reminder and renewal
+notifications fire on a real Android device, the SAF export and file-picker import work
+against Downloads/Drive, widgets render/light-dark/refresh, TickTick token + invalid-token UI
+on device. Dark mode has only been checked in the web preview. Do not add product features.
 
 At the end of each phase report: what changed, files, schema, tests, limitations, next phase.
 

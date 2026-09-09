@@ -22,6 +22,13 @@ export type _Accounts = Assert<
   >
 >;
 
+export type _Backup = Assert<
+  Parity<
+    typeof import('@/features/backup/repository'),
+    typeof import('@/features/backup/repository.native')
+  >
+>;
+
 export type _Expenses = Assert<
   Parity<
     typeof import('@/features/expenses/repository'),

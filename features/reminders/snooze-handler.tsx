@@ -6,6 +6,7 @@ import {
   supportsNotifications,
 } from '@/notifications';
 import { snoozeReminder } from '@/features/reminders/store';
+import { tapSuccess } from '@/lib/haptics';
 import { useEffect } from 'react';
 
 function extractReminderId(response: NotificationResponse) {
@@ -25,6 +26,7 @@ export function SnoozeResponseHandler() {
       const reminderId = extractReminderId(response);
       if (reminderId == null) return;
       await snoozeReminder(reminderId, minutes);
+      tapSuccess();
     }
 
     void getLastNotificationResponse().then((response) => {

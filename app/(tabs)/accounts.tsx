@@ -7,7 +7,7 @@ import { membershipsForIdentity } from '@/features/accounts/helpers';
 import { useAccountData } from '@/features/accounts/store';
 import type { Identity } from '@/features/accounts/types';
 import { Fab, FabIcon, FabLabel } from '@/components/ui/fab';
-import { AddIcon } from '@/components/ui/icon';
+import { Plus } from 'lucide-react-native';
 import { Box } from '@/components/ui/box';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
@@ -84,7 +84,7 @@ export default function AccountsScreen() {
         onPress={() => router.push('/account/new')}
         accessibilityRole="button"
         accessibilityLabel="Add identity">
-        <FabIcon as={AddIcon} />
+        <FabIcon as={Plus} />
         <FabLabel>Add identity</FabLabel>
       </Fab>
     </Box>

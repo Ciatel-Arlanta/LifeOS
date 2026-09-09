@@ -1,0 +1,32 @@
+diff --git a/build/navigationEvents/navigation.js b/build/navigationEvents/navigation.js
+index e7eb7c5565aada51e891812a86ce16e6c61901a8..0b3fd7cdd70aa91132e2d8d8a4f702d2c52d8e7b 100644
+--- a/build/navigationEvents/navigation.js
++++ b/build/navigationEvents/navigation.js
+@@ -1,7 +1,7 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.handleNavigationOnReady = handleNavigationOnReady;
+-const _1 = require(".");
++const _1 = require("./index");
+ const store_1 = require("../global-state/store");
+ let unsubscribe;
+ function handleNavigationOnReady() {
+@@ -10,11 +10,13 @@ function handleNavigationOnReady() {
+     unsubscribe = store_1.storeRef.current.navigationRef.addListener('__unsafe_action__', (e) => {
+         if (!e.data.noop && store_1.storeRef.current.state) {
+             const action = e.data.action;
+-            (0, _1.emit)('actionDispatched', {
+-                actionType: action.type,
+-                payload: action.payload,
+-                state: store_1.storeRef.current.state,
+-            });
++            if (typeof _1?.emit === 'function') {
++                (0, _1.emit)('actionDispatched', {
++                    actionType: action.type,
++                    payload: action.payload,
++                    state: store_1.storeRef.current.state,
++                });
++            }
+         }
+     });
+ }

@@ -16,29 +16,26 @@ export function GluestackUIProvider({
   mode?: ModeType;
   children?: React.ReactNode;
 }) {
-  const handleMediaQuery = React.useCallback((e: MediaQueryListEvent) => {
-    script(e.matches ? 'dark' : 'light');
-  }, []);
-
   useSafeLayoutEffect(() => {
-    if (mode !== 'system') {
-      const documentElement = document.documentElement;
-      if (documentElement) {
-        documentElement.classList.add(mode);
-        documentElement.classList.remove(mode === 'light' ? 'dark' : 'light');
-        documentElement.style.colorScheme = mode;
-      }
-    }
+    script(mode);
   }, [mode]);
 
   useSafeLayoutEffect(() => {
     if (mode !== 'system') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
 
-    media.addListener(handleMediaQuery);
+    const listener = (e: MediaQueryListEvent) => {
+      script(e.matches ? 'dark' : 'light');
+    };
 
-    return () => media.removeListener(handleMediaQuery);
-  }, [handleMediaQuery]);
+    if (media.addEventListener) {
+      media.addEventListener('change', listener);
+      return () => media.removeEventListener('change', listener);
+    } else {
+      media.addListener(listener);
+      return () => media.removeListener(listener);
+    }
+  }, [mode]);
 
   return (
     <>
